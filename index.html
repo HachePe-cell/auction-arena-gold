@@ -3,246 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Auction Arena - Elite</title>
+    <title>Grand Auctioneer: Antiquities</title>
     <style>
         :root {
-            --gold: #d4af37; --dark: #1a1410; --paper: #f4e4bc;
-            --accent: #8b0000; --win: #2e7d32; --loss: #c62828;
+            --gold: #c5a059; --dark-oak: #1a0f0a; --velvet: #4a0404;
+            --cream: #f4e4bc; --bronze: #8c7853;
         }
+        
         body { 
-            background-color: var(--dark); color: var(--paper); font-family: 'Georgia', serif;
+            background: var(--dark-oak); color: var(--cream); font-family: 'Times New Roman', serif;
             margin: 0; overflow: hidden; height: 100vh;
+            background-image: radial-gradient(circle, #2c1e14 0%, #0a0a0a 100%);
         }
+
+        /* --- UI Screens --- */
         .screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            background: radial-gradient(circle, #2c1e14 0%, #0a0a0a 100%); z-index: 10; padding: 20px; box-sizing: border-box;
+            padding: 20px; box-sizing: border-box; z-index: 10;
         }
         .active { display: flex; }
 
-        /* Setup Personalización */
-        .setup-box { background: var(--paper); color: #333; padding: 30px; border-radius: 5px; border: 5px double var(--gold); text-align: center; width: 300px; }
-        input { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #999; font-family: serif; }
-        
-        /* UI de Juego Estilo Antiguo */
-        .profile-bar { position: absolute; top: 15px; left: 15px; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 50px; border: 1px solid var(--gold); }
-        .totem-icon { font-size: 1.5rem; filter: drop-shadow(0 0 5px var(--gold)); }
-
-        .btn {
-            padding: 12px 25px; border: 1px solid var(--gold); border-radius: 3px; font-weight: bold;
-            cursor: pointer; transition: 0.3s; text-transform: uppercase; margin: 10px;
-            background: var(--gold); color: var(--dark); box-shadow: 0 4px 0 #8b7500;
+        /* --- Realistic Textures --- */
+        .wood-panel {
+            background: linear-gradient(145deg, #231710, #1a0f0a);
+            border: 3px solid var(--gold); border-radius: 4px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,1);
         }
-        .btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn-outline { background: transparent; color: var(--gold); }
 
-        #game-board { 
-            background: #2c1e14; padding: 20px; border: 2px solid var(--gold); width: 100%; max-width: 400px;
-            box-shadow: 0 0 50px rgba(0,0,0,1); position: relative;
+        /* --- Header & Stats --- */
+        .hud {
+            position: absolute; top: 0; width: 100%; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
-        .item-frame { width: 100%; height: 220px; border: 8px inset #4a3728; margin-bottom: 15px; overflow: hidden; background: #000; }
-        .item-frame img { width: 100%; height: 100%; object-fit: cover; sepia: 0.3; }
 
-        .timer-wrap { width: 100%; height: 10px; background: #111; border: 1px solid var(--gold); margin: 15px 0; border-radius: 5px; overflow: hidden; }
-        #timer-bar { width: 100%; height: 100%; background: var(--gold); transition: width 0.1s linear; }
+        /* --- Auction Room Layout --- */
+        .auction-layout {
+            display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+            width: 100%; max-width: 1000px; height: 80vh;
+        }
 
-        .market-card { background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 10px; border-radius: 4px; text-align: center; }
+        .item-display {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; text-align: center;
+        }
+
+        .spotlight {
+            width: 100%; height: 350px; background: #000;
+            border: 10px solid #222; position: relative;
+            box-shadow: 0 0 100px rgba(197, 160, 89, 0.2);
+            overflow: hidden;
+        }
+        .spotlight img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.2) contrast(1.1); }
+
+        .bid-history {
+            background: rgba(0,0,0,0.4); border-left: 1px solid var(--bronze);
+            padding: 15px; overflow-y: auto; font-size: 0.9rem;
+        }
+        .bid-log { margin-bottom: 8px; border-bottom: 1px solid rgba(140, 120, 83, 0.2); padding-bottom: 4px; }
+
+        /* --- Controls --- */
+        .control-bar {
+            width: 100%; padding: 20px; display: flex; justify-content: center; gap: 20px;
+            background: var(--velvet); border-top: 2px solid var(--gold);
+        }
+
+        .btn-auction {
+            background: var(--gold); color: black; border: 1px solid #000;
+            padding: 15px 30px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .btn-auction:hover { background: #e0bb72; }
+
+        /* --- Animations --- */
+        @keyframes flash { from { opacity: 0.5; } to { opacity: 1; } }
+        .winning { animation: flash 0.5s infinite alternate; color: #4ade80 !important; }
+
+        .condition-tag {
+            background: var(--bronze); color: white; padding: 2px 10px;
+            font-size: 0.7rem; text-transform: uppercase; margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="screen active">
-        <div class="setup-box">
-            <h2 style="margin-top:0">REGISTRO DE POSTOR</h2>
-            <input type="text" id="user-id" placeholder="Tu Nombre/ID..." maxlength="12">
-            <p style="font-size: 0.8rem;">Selecciona tu Tótem de Suerte:</p>
-            <div style="display:flex; justify-content:space-around; margin: 15px 0;">
-                <button onclick="selectTotem('🍀', 'Suerte')" class="totem-btn" id="t1">🍀</button>
-                <button onclick="selectTotem('🦅', 'Vista')" class="totem-btn" id="t2">🦅</button>
-                <button onclick="selectTotem('🪙', 'Riqueza')" class="totem-btn" id="t3">🪙</button>
+        <div class="wood-panel" style="padding: 40px; text-align: center;">
+            <h1 style="color: var(--gold); margin-top:0;">REGISTRO DE ÉLITE</h1>
+            <p>Ingrese su Identificación de Postor:</p>
+            <input type="text" id="username" placeholder="Nombre del Coleccionista..." style="background:none; border:none; border-bottom:1px solid var(--gold); color:white; padding:10px; text-align:center; font-size:1.2rem; width:100%;">
+            
+            <p style="margin-top:30px;">Elija su Especialidad (Tótem):</p>
+            <div style="display:flex; gap:10px; justify-content:center; margin-bottom:30px;">
+                <button onclick="pickSkill('eye')" id="s-eye" class="btn-auction" style="font-size:0.7rem;">🦅 Ojo Clínico<br>(Ve el valor real)</button>
+                <button onclick="pickSkill('silver')" id="s-silver" class="btn-auction" style="font-size:0.7rem;">🪙 Lengua de Plata<br>(-10% precio final)</button>
             </div>
-            <button class="btn" onclick="startGame()">ENTRAR AL CLUB</button>
+            <button class="btn-auction" onclick="initApp()">INGRESAR A LA LOGIA</button>
         </div>
     </div>
 
-    <div id="main-menu" class="screen">
-        <div class="profile-bar">
-            <span id="display-totem" class="totem-icon">🍀</span>
-            <span id="display-name" style="font-weight:bold; color:var(--gold);">ID</span>
+    <div id="menu-screen" class="screen">
+        <div class="hud">
+            <div><span id="p-totem"></span> <span id="p-name" style="color:var(--gold)"></span></div>
+            <div style="font-size:1.5rem;">Saldo: <span id="p-balance" style="color:var(--gold)">$1,000</span></div>
         </div>
-        <h1 style="color:var(--gold); font-size: 2.5rem; text-align:center;">GALERÍA DE<br>ANTIGÜEDADES</h1>
-        <button class="btn" onclick="showScreen('game-screen')">BUSCAR SUBASTAS</button>
-        <button class="btn btn-outline" onclick="showScreen('market-screen')">TASAR COLECCIÓN</button>
-        <div style="margin-top: 20px;">SALDO: <span style="color:var(--gold)">$</span><span class="balance-text">1000</span></div>
-    </div>
-
-    <div id="game-screen" class="screen">
-        <div id="game-board">
-            <div class="item-frame"><img id="item-img" src=""></div>
-            <div style="text-align: center;">
-                <small id="rarity-text" style="color:var(--gold); font-style:italic;"></small>
-                <h2 id="item-name" style="margin: 5px 0; color:var(--paper);">Cargando...</h2>
-                <div style="font-size: 2rem; font-weight: bold; color:var(--gold);">$<span id="current-bid">0</span></div>
-                <div id="winner-text" style="color: #999; font-size: 0.9rem;">Oferta actual: Nadie</div>
-            </div>
-            <div class="timer-wrap"><div id="timer-bar"></div></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn" style="margin:0; width:100%" onclick="playerBid()">OFERTAR +$50</button>
-                <button class="btn btn-outline" style="margin:0; width:100%" onclick="showScreen('main-menu')">RETIRARSE</button>
-            </div>
+        <h1 style="font-size: 3.5rem; letter-spacing: 10px; text-align:center;">THE GRAND<br>AUCTIONEER</h1>
+        <div style="display:flex; flex-direction:column; gap:15px;">
+            <button class="btn-auction" onclick="startAuction()">ENTRAR A LA SALA</button>
+            <button class="btn-auction" style="background:none; color:var(--gold)" onclick="showMarket()">MI GALERÍA PRIVADA</button>
         </div>
     </div>
 
-    <div id="market-screen" class="screen">
-        <h2 style="color:var(--gold)">VALUACIÓN DE ACTIVOS</h2>
-        <div id="market-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px; margin-bottom:20px;"></div>
-        <button class="btn btn-outline" onclick="showScreen('main-menu')">VOLVER</button>
+    <div id="auction-screen" class="screen" style="padding:0;">
+        <div class="hud">
+            <button onclick="exitAuction()" style="background:none; border:none; color:var(--gold); cursor:pointer;">⟵ RETIRARSE</button>
+            <div id="timer-display" style="font-size: 2rem; color:var(--gold)">15s</div>
+        </div>
+
+        <div class="auction-layout">
+            <div class="item-display">
+                <div class="spotlight">
+                    <img id="item-img" src="">
+                </div>
+                <div class="condition-tag" id="item-condition">Excelente Estado</div>
+                <h2 id="item-title" style="font-size: 2rem; margin:10px 0;">Objeto de Arte</h2>
+                <div style="font-size: 3rem; color:var(--gold); font-weight:bold;">$<span id="live-bid">0</span></div>
+                <p id="current-leader" style="font-style:italic; color:#aaa;">Esperando apertura...</p>
+            </div>
+
+            <div class="bid-history" id="bid-logs">
+                <div style="text-align:center; color:var(--gold); margin-bottom:15px;">HISTORIAL DE LA SALA</div>
+                </div>
+        </div>
+
+        <div class="control-bar">
+            <button class="btn-auction" style="width:300px; font-size:1.2rem;" onclick="placeBid()">PUJAR +$100</button>
+            <button class="btn-auction" style="background:var(--velvet); color:white;" onclick="useSkill()">HABILIDAD TÓTEM</button>
+        </div>
     </div>
 
-    <div id="overlay" class="screen" style="background:rgba(0,0,0,0.9)">
-        <h1 id="modal-title">¡ADJUDICADO!</h1>
-        <p id="modal-msg"></p>
-        <button class="btn" onclick="closeModal()">CONTINUAR</button>
+    <div id="result-overlay" class="screen" style="background:rgba(0,0,0,0.95)">
+        <h1 id="res-title" style="font-size:4rem; color:var(--gold);">VENDIDO</h1>
+        <p id="res-desc" style="font-size:1.5rem;"></p>
+        <button class="btn-auction" onclick="closeAuction()">VOLVER AL CLUB</button>
     </div>
 
     <script>
-        let userData = JSON.parse(localStorage.getItem('auc_user')) || { name: "", totem: "🍀", totemType: "" };
-        let balance = parseInt(localStorage.getItem('auc_bal')) || 1000;
-        let inventory = JSON.parse(localStorage.getItem('auc_inv')) || [];
-        let level = 1;
+        let state = {
+            user: { name: "", totem: "", balance: 2500, inventory: [] },
+            auction: { active: false, bid: 0, leader: "", time: 15, item: null, logs: [] },
+            skillUsed: false
+        };
 
-        let currentBid = 0, timeLeft = 15, timerInterval, lastBidder = "", bidCount = 0;
-
-        const antiques = [
-            { name: "Sable de Oficial (1812)", rarity: "COMÚN", base: 200, img: "https://images.unsplash.com/photo-1599751449128-eb7249c3d6b1?w=400" },
-            { name: "Reloj Patek de Oro", rarity: "RARO", base: 800, img: "https://images.unsplash.com/photo-1509048191080-d2984bad6ad5?w=400" },
-            { name: "Vasija Dinastía Ming", rarity: "ÉPICO", base: 2500, img: "https://images.unsplash.com/photo-1580536214401-02bb9bb123b6?w=400" },
-            { name: "Códice Medieval", rarity: "LEGENDARIO", base: 6000, img: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400" }
+        const CATALOGO = [
+            { name: "Gramófono Edison Original", cond: "Funcional", base: 500, img: "https://images.unsplash.com/photo-1543336337-338274d8122c?w=600", val: 1200 },
+            { name: "Máscara Funeraria Egipcia", cond: "Restaurada", base: 2000, img: "https://images.unsplash.com/photo-1599423300746-b62533397364?w=600", val: 5000 },
+            { name: "Violín Stradivarius 1715", cond: "Museo", base: 10000, img: "https://images.unsplash.com/photo-1612225330812-01a9c6b355ee?w=600", val: 25000 }
         ];
 
-        function selectTotem(icon, type) {
-            userData.totem = icon; userData.totemType = type;
-            document.querySelectorAll('.totem-btn').forEach(b => b.style.border = "none");
-            event.target.style.border = "2px solid var(--gold)";
+        const RIVALES = ["Lord Sterling", "Baronesa Rothschild", "Museo de Louvre", "Coleccionista Anónimo"];
+
+        function initApp() {
+            state.user.name = document.getElementById('username').value || "Invitado";
+            if(!state.user.totem) state.user.totem = "Ojo Clínico";
+            document.getElementById('p-name').innerText = state.user.name;
+            document.getElementById('p-totem').innerText = state.user.totem === "eye" ? "🦅" : "🪙";
+            showScreen('menu-screen');
         }
 
-        function startGame() {
-            userData.name = document.getElementById('user-id').value || "Postor Anónimo";
-            localStorage.setItem('auc_user', JSON.stringify(userData));
-            document.getElementById('display-name').innerText = userData.name;
-            document.getElementById('display-totem').innerText = userData.totem;
-            showScreen('main-menu');
+        function pickSkill(s) {
+            state.user.totem = s;
+            document.querySelectorAll('#s-eye, #s-silver').forEach(b => b.style.opacity = "0.5");
+            document.getElementById('s-'+s).style.opacity = "1";
         }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            updateBalanceUI();
-            if(id === 'game-screen') initAuction();
-            if(id === 'market-screen') renderMarket();
+            updateStats();
         }
 
-        function initAuction() {
-            let item = antiques[Math.min(level-1, antiques.length-1)];
-            currentBid = item.base;
-            timeLeft = 15; lastBidder = "Nadie"; bidCount = 0;
-            document.getElementById('item-name').innerText = item.name;
+        function updateStats() {
+            document.getElementById('p-balance').innerText = "$" + state.user.balance.toLocaleString();
+        }
+
+        function startAuction() {
+            let item = CATALOGO[Math.floor(Math.random() * CATALOGO.length)];
+            state.auction = { 
+                item: item, bid: item.base, leader: "La Casa", 
+                time: 15, active: true, logs: ["Subasta iniciada por: " + item.name] 
+            };
+            state.skillUsed = false;
             document.getElementById('item-img').src = item.img;
-            document.getElementById('rarity-text').innerText = item.rarity;
-            document.getElementById('current-bid').innerText = currentBid;
-            startTimer();
+            document.getElementById('item-title').innerText = item.name;
+            document.getElementById('item-condition').innerText = "Condición: " + item.cond;
+            document.getElementById('bid-logs').innerHTML = "";
+            updateAuctionUI();
+            showScreen('auction-screen');
+            runTimer();
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if(!document.getElementById('game-screen').classList.contains('active')) return;
-                timeLeft -= 0.1;
-                document.getElementById('timer-bar').style.width = (timeLeft / 15 * 100) + "%";
+        function runTimer() {
+            let loop = setInterval(() => {
+                if(!state.auction.active) { clearInterval(loop); return; }
+                state.auction.time -= 0.1;
+                document.getElementById('timer-display').innerText = Math.ceil(state.auction.time) + "s";
                 
-                // Inteligencia Artificial más lenta al principio
-                let botThreshold = level < 3 ? 0.985 : 0.97;
-                if (timeLeft > 1 && Math.random() > botThreshold && lastBidder !== "Bot") botBid();
-                
-                if (timeLeft <= 0) { clearInterval(timerInterval); endAuction(); }
+                // IA Realista: Puja si no es el líder y el azar lo decide
+                if(state.auction.time > 1 && Math.random() > 0.97 && state.auction.leader !== "Rival") {
+                    botBid();
+                }
+
+                if(state.auction.time <= 0) {
+                    state.auction.active = false;
+                    finishAuction();
+                }
             }, 100);
         }
 
-        function playerBid() {
-            if (balance >= currentBid + 50) {
-                currentBid += 50; lastBidder = userData.name;
-                timeLeft = Math.min(timeLeft + 2.5, 8); // Recupera tiempo
-                updateUI();
-            }
+        function placeBid() {
+            if(state.user.balance < state.auction.bid + 100) return alert("Saldo insuficiente");
+            state.auction.bid += 100;
+            state.auction.leader = state.user.name;
+            state.auction.time = Math.min(state.auction.time + 2, 8);
+            addLog("Pujaste a $" + state.auction.bid, "user");
+            updateAuctionUI();
         }
 
         function botBid() {
-            currentBid += 50; lastBidder = "Bot";
-            timeLeft = Math.min(timeLeft + 2, 6);
-            updateUI();
+            let rival = RIVALES[Math.floor(Math.random()*RIVALES.length)];
+            state.auction.bid += 100;
+            state.auction.leader = "Rival";
+            state.auction.time = Math.min(state.auction.time + 1.5, 6);
+            addLog(rival + " sube a $" + state.auction.bid, "bot");
+            updateAuctionUI();
         }
 
-        function updateUI() {
-            document.getElementById('current-bid').innerText = currentBid;
-            document.getElementById('winner-text').innerText = "Líder: " + (lastBidder === userData.name ? "Tú" : "Competidor");
-            updateBalanceUI();
+        function addLog(msg, type) {
+            let log = document.createElement('div');
+            log.className = "bid-log";
+            log.style.color = type === "user" ? "var(--gold)" : "#aaa";
+            log.innerText = "» " + msg;
+            const container = document.getElementById('bid-logs');
+            container.prepend(log);
         }
 
-        function updateBalanceUI() {
-            document.querySelectorAll('.balance-text').forEach(el => el.innerText = balance);
+        function updateAuctionUI() {
+            document.getElementById('live-bid').innerText = state.auction.bid.toLocaleString();
+            let leaderText = document.getElementById('current-leader');
+            leaderText.innerText = "Líder actual: " + (state.auction.leader === state.user.name ? "USTED" : "COMPETIDOR");
+            if(state.auction.leader === state.user.name) leaderText.classList.add('winning');
+            else leaderText.classList.remove('winning');
         }
 
-        function renderMarket() {
-            const grid = document.getElementById('market-grid');
-            grid.innerHTML = inventory.length ? inventory.map((item, i) => `
-                <div class="market-card">
-                    <img src="${item.img}" style="width:100%; height:60px; object-fit:cover;">
-                    <div style="font-size:0.7rem;">${item.name}</div>
-                    <div style="color:var(--gold)">$${item.price}</div>
-                    <button class="btn" style="padding:5px; font-size:0.6rem; width:100%;" onclick="sellItem(${i})">VENDER</button>
-                </div>
-            `).join('') : "<p style='grid-column:span 2'>Sin antigüedades.</p>";
-        }
-
-        function sellItem(i) {
-            balance += inventory[i].price;
-            inventory.splice(i, 1);
-            save(); renderMarket(); updateBalanceUI();
-        }
-
-        function endAuction() {
-            const overlay = document.getElementById('overlay');
-            overlay.classList.add('active');
-            let item = antiques[Math.min(level-1, antiques.length-1)];
-            if (lastBidder === userData.name) {
-                balance -= currentBid;
-                inventory.push({name: item.name, img: item.img, price: Math.floor(currentBid * 1.2)});
-                level++;
-                document.getElementById('modal-title').innerText = "¡ADJUDICADO!";
-                document.getElementById('modal-msg').innerText = `Has ganado el ${item.name}. ¡Una pieza magnífica!`;
+        function useSkill() {
+            if(state.skillUsed) return;
+            state.skillUsed = true;
+            if(state.user.totem === 'eye') {
+                alert("Tasación Real: Este objeto se vende en galería por $" + state.auction.item.val);
             } else {
-                document.getElementById('modal-title').innerText = "¡MARTILLAZO!";
-                document.getElementById('modal-msg').innerText = "La pieza se ha vendido a otro coleccionista.";
+                alert("Lengua de Plata: Si ganas, el martillo cerrará un 20% más barato.");
             }
-            save();
         }
 
-        function save() {
-            localStorage.setItem('auc_bal', balance);
-            localStorage.setItem('auc_inv', JSON.stringify(inventory));
+        function finishAuction() {
+            const overlay = document.getElementById('result-overlay');
+            if(state.auction.leader === state.user.name) {
+                let cost = state.auction.bid;
+                if(state.user.totem === 'silver' && state.skillUsed) cost *= 0.8;
+                state.user.balance -= cost;
+                state.user.inventory.push(state.auction.item);
+                document.getElementById('res-title').innerText = "¡ADJUDICADO!";
+                document.getElementById('res-desc').innerText = "El objeto es suyo por $" + cost.toLocaleString();
+            } else {
+                document.getElementById('res-title').innerText = "VENDIDO";
+                document.getElementById('res-desc').innerText = "La pieza fue ganada por otro postor.";
+            }
+            overlay.classList.add('active');
+            localStorage.setItem('grand_auc_data', JSON.stringify(state.user));
         }
 
-        function closeModal() {
-            document.getElementById('overlay').classList.remove('active');
-            showScreen('main-menu');
+        function closeAuction() {
+            document.getElementById('result-overlay').classList.remove('active');
+            showScreen('menu-screen');
         }
 
-        // Cargar datos al inicio
-        if(userData.name) {
-            document.getElementById('setup-screen').classList.remove('active');
-            document.getElementById('main-menu').classList.add('active');
-            document.getElementById('display-name').innerText = userData.name;
-            document.getElementById('display-totem').innerText = userData.totem;
+        function exitAuction() {
+            state.auction.active = false;
+            showScreen('menu-screen');
         }
     </script>
 </body>
