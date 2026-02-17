@@ -3,118 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold - Ultimate</title>
+    <title>Auction Arena Gold - Market Edition</title>
     <style>
         :root {
             --gold: #ffd700; --dark-bg: #0a0a0a; --card-bg: #1a1a1a;
-            --accent: #ff4500; --glass: rgba(255, 255, 255, 0.1);
+            --accent: #ff4500; --glass: rgba(255, 255, 255, 0.05);
+            --win: #28a745;
         }
         
         body { 
-            background-color: var(--dark-bg); color: #fff; font-family: 'Segoe UI', system-ui;
+            background-color: var(--dark-bg); color: #fff; font-family: 'Segoe UI', sans-serif;
             margin: 0; overflow: hidden; height: 100vh;
         }
 
-        /* Pantallas */
         .screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            background: var(--dark-bg); z-index: 10;
+            background: var(--dark-bg); z-index: 10; padding: 20px; box-sizing: border-box;
         }
         .active { display: flex; }
 
         /* Menú Principal */
-        #main-menu { background: radial-gradient(circle, #222 0%, #000 100%); }
-        .logo { font-size: 3rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.5); margin-bottom: 40px; text-align: center; }
+        .logo { font-size: 2.5rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.3); margin-bottom: 30px; text-align: center; }
 
-        /* Tarjeta de Juego */
-        .game-container { width: 95%; max-width: 450px; }
-        #game-board { 
-            background: var(--card-bg); padding: 20px; border-radius: 28px; 
-            border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-        }
-
-        /* Imágenes del Objeto */
-        .item-image-container {
-            width: 100%; height: 180px; background: #000; border-radius: 18px;
-            margin-bottom: 15px; overflow: hidden; border: 1px solid #444;
-        }
-        .item-image-container img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-
-        /* Botones Estilizados */
+        /* Botones */
         .btn {
-            padding: 15px 40px; border: none; border-radius: 50px; font-weight: bold;
-            cursor: pointer; transition: 0.3s; text-transform: uppercase; margin: 10px;
-            min-width: 200px;
+            padding: 16px 30px; border: none; border-radius: 15px; font-weight: bold;
+            cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 8px;
+            width: 250px; text-align: center;
         }
-        .btn-gold { background: var(--gold); color: #000; box-shadow: 0 5px 15px rgba(255,215,0,0.3); }
+        .btn-gold { background: var(--gold); color: #000; }
         .btn-outline { background: transparent; border: 2px solid var(--gold); color: var(--gold); }
-        .btn:hover { transform: translateY(-3px) scale(1.05); }
+        .btn-sell { background: var(--win); color: white; padding: 8px; width: 100%; font-size: 0.7rem; border-radius: 5px; }
+        .btn:active { transform: scale(0.95); }
 
-        /* Inventario Modal */
-        #inventory-screen { background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); }
-        .inv-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
-            max-height: 60vh; overflow-y: auto; padding: 20px; width: 90%;
+        /* Tarjeta de Subasta */
+        #game-board { 
+            background: var(--card-bg); padding: 20px; border-radius: 25px; 
+            border: 1px solid #333; width: 100%; max-width: 400px;
         }
-        .inv-slot {
-            background: var(--glass); aspect-ratio: 1; border-radius: 15px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border: 1px solid #333; font-size: 0.8rem;
+        .item-img-box { width: 100%; height: 200px; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 1px solid #444; }
+        .item-img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Grid del Mercado */
+        .market-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+            width: 100%; max-width: 500px; overflow-y: auto; margin-bottom: 20px;
+        }
+        .market-card {
+            background: var(--card-bg); border-radius: 15px; border: 1px solid #333;
+            padding: 10px; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Pausa */
-        #pause-btn { position: absolute; top: 20px; right: 20px; background: var(--glass); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #444; }
+        .nav-top { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
     <div id="main-menu" class="screen active">
         <div class="logo">AUCTION<br>ARENA GOLD</div>
-        <button class="btn btn-gold" onclick="showScreen('game-screen')">JUGAR AHORA</button>
-        <button class="btn btn-outline" onclick="showScreen('inventory-screen')">INVENTARIO</button>
+        <button class="btn btn-gold" onclick="showScreen('game-screen')">NUEVA SUBASTA</button>
+        <button class="btn btn-outline" onclick="showScreen('market-screen')">MERCADO (VENDER)</button>
+        <div style="margin-top: 20px; color: var(--gold);">SALDO: $<span class="balance-text">1000</span></div>
     </div>
 
     <div id="game-screen" class="screen">
-        <div id="pause-btn" onclick="showScreen('main-menu')">⏸</div>
+        <div class="nav-top">
+            <span style="color: var(--gold); font-weight: bold;">💰 $<span class="balance-text">1000</span></span>
+            <button onclick="showScreen('main-menu')" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">✕</button>
+        </div>
         
-        <div class="game-container">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--gold); font-weight: bold;">
-                <span>💰 $<span id="balance">1000</span></span>
-                <span>Nivel <span id="level">1</span></span>
+        <div id="game-board">
+            <div class="item-img-box"><img id="item-img" src=""></div>
+            <div style="text-align: center;">
+                <small id="rarity-text"></small>
+                <h2 id="item-name" style="margin: 5px 0;">Cargando...</h2>
+                <div style="font-size: 2rem; font-weight: 900; color: var(--gold);">$<span id="current-bid">0</span></div>
+                <div id="winner-text" style="color: #777; font-size: 0.8rem; margin-bottom: 10px;">Líder: Nadie</div>
             </div>
-
-            <div id="game-board">
-                <div class="item-image-container">
-                    <img id="item-img" src="" alt="Objeto">
-                </div>
-                <div style="text-align: center;">
-                    <div id="rarity-text" style="letter-spacing: 2px; font-size: 0.7rem; font-weight: 900;"></div>
-                    <h2 id="item-name" style="margin: 5px 0;">Objeto</h2>
-                    <div style="font-size: 2rem; font-weight: bold; color: var(--gold); margin: 10px 0;">$<span id="current-bid">0</span></div>
-                    <div id="winner-text" style="color: #888; font-size: 0.9rem;">Líder: Nadie</div>
-                </div>
-
-                <div style="height: 6px; background: #222; border-radius: 3px; margin: 20px 0; overflow: hidden;">
-                    <div id="timer-bar" style="width: 100%; height: 100%; background: var(--accent); transition: width 0.1s linear;"></div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button class="btn-gold" style="padding: 15px; border-radius: 12px; border:none; font-weight:bold;" onclick="playerBid()">PUJAR (+50)</button>
-                    <button id="hammer-btn" style="background:#333; color:white; border:none; border-radius:12px;" onclick="useHammer()">🔨 MAZO</button>
-                </div>
+            <div style="height: 6px; background: #222; border-radius: 3px; margin-bottom: 15px; overflow: hidden;">
+                <div id="timer-bar" style="width: 100%; height: 100%; background: var(--accent); transition: width 0.1s linear;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-gold" style="width: auto; padding: 15px; margin:0;" onclick="playerBid()">PUJAR +50</button>
+                <button id="hammer-btn" style="background:#444; color:white; border:none; border-radius:15px;" onclick="useHammer()">🔨 MAZO</button>
             </div>
         </div>
     </div>
 
-    <div id="inventory-screen" class="screen">
-        <h2 style="color: var(--gold);">MIS TESOROS</h2>
-        <div id="inventory-grid" class="inv-grid"></div>
-        <button class="btn btn-outline" onclick="showScreen('main-menu')">VOLVER</button>
+    <div id="market-screen" class="screen">
+        <h2 style="color: var(--gold);">TU MERCADO</h2>
+        <p style="margin-bottom: 20px;">Vende tus artículos para obtener fondos</p>
+        
+        <div id="market-grid" class="market-grid">
+            </div>
+
+        <button class="btn btn-outline" onclick="showScreen('main-menu')">VOLVER AL MENÚ</button>
     </div>
 
-    <div id="overlay" class="screen" style="background: rgba(0,0,0,0.9);">
-        <h1 id="modal-title">¡GANASTE!</h1>
+    <div id="overlay" class="screen" style="background: rgba(0,0,0,0.95); z-index: 100;">
+        <h1 id="modal-title">¡CONSEGUIDO!</h1>
         <p id="modal-msg"></p>
         <button class="btn btn-gold" onclick="closeModal()">CONTINUAR</button>
     </div>
@@ -127,16 +115,18 @@
         let currentBid = 0, timeLeft = 12, timerInterval, lastBidder = "Nadie", botsBlocked = false;
 
         const items = [
-            { name: "Reloj de Oro", rarity: "RARO", color: "#00ceff", base: 300, img: "https://images.unsplash.com/photo-1524592093030-0560c7c48b0c?w=400" },
-            { name: "Coche Deportivo", rarity: "ÉPICO", color: "#a335ee", base: 1500, img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400" },
-            { name: "Corona Real", rarity: "LEGENDARIO", color: "#ff8c00", base: 5000, img: "https://images.unsplash.com/photo-1590226053097-e29858df7543?w=400" }
+            { name: "Reloj Vintage", rarity: "RARO", color: "#00ceff", base: 300, img: "https://images.unsplash.com/photo-1524592093030-0560c7c48b0c?w=400" },
+            { name: "Supercarro Red", rarity: "ÉPICO", color: "#a335ee", base: 1200, img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400" },
+            { name: "Yate Privado", rarity: "LEGENDARIO", color: "#ff8c00", base: 4500, img: "https://images.unsplash.com/photo-1567899378494-47b22a2ca96a?w=400" },
+            { name: "Isla Privada", rarity: "MÍTICO", color: "#ff0055", base: 15000, img: "https://images.unsplash.com/photo-1505881502353-a1986add3762?w=400" }
         ];
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+            updateBalanceUI();
             if(screenId === 'game-screen') initLevel();
-            if(screenId === 'inventory-screen') renderInventory();
+            if(screenId === 'market-screen') renderMarket();
         }
 
         function initLevel() {
@@ -149,8 +139,6 @@
             document.getElementById('rarity-text').innerText = item.rarity;
             document.getElementById('rarity-text').style.color = item.color;
             document.getElementById('current-bid').innerText = currentBid;
-            document.getElementById('balance').innerText = balance;
-            document.getElementById('level').innerText = level;
             
             startTimer();
         }
@@ -161,7 +149,7 @@
                 if(!document.getElementById('game-screen').classList.contains('active')) return;
                 timeLeft -= 0.1;
                 document.getElementById('timer-bar').style.width = (timeLeft / 12 * 100) + "%";
-                if (!botsBlocked && timeLeft > 1 && Math.random() > 0.97) botBid();
+                if (!botsBlocked && timeLeft > 1 && Math.random() > 0.96) botBid();
                 if (timeLeft <= 0) { clearInterval(timerInterval); endAuction(); }
             }, 100);
         }
@@ -169,46 +157,76 @@
         function playerBid() {
             if (balance >= currentBid + 50) {
                 currentBid += 50; lastBidder = "Tú";
-                timeLeft = Math.min(timeLeft + 2, 6); updateUI();
+                timeLeft = Math.min(timeLeft + 2, 6);
+                updateUI();
             }
         }
 
         function botBid() {
             currentBid += 50; lastBidder = "Bot_" + Math.floor(Math.random()*99);
-            timeLeft = Math.min(timeLeft + 2, 5); updateUI();
+            timeLeft = Math.min(timeLeft + 2, 5);
+            updateUI();
         }
 
         function updateUI() {
             document.getElementById('current-bid').innerText = currentBid;
             document.getElementById('winner-text').innerText = "Líder: " + lastBidder;
-            document.getElementById('balance').innerText = balance;
+            updateBalanceUI();
         }
 
-        function renderInventory() {
-            const grid = document.getElementById('inventory-grid');
-            if(inventory.length === 0) { grid.innerHTML = "<p>Vacío</p>"; return; }
-            grid.innerHTML = inventory.map(item => `
-                <div class="inv-slot">
-                    <img src="${item.img}" style="width:100%; height:100%; object-fit:cover; border-radius:10px;">
+        function updateBalanceUI() {
+            document.querySelectorAll('.balance-text').forEach(el => el.innerText = balance);
+        }
+
+        function renderMarket() {
+            const grid = document.getElementById('market-grid');
+            if(inventory.length === 0) {
+                grid.innerHTML = "<p style='grid-column: span 2; opacity:0.5;'>No tienes objetos para vender.</p>";
+                return;
+            }
+            grid.innerHTML = inventory.map((item, index) => `
+                <div class="market-card">
+                    <img src="${item.img}" style="width:100%; height:80px; object-fit:cover; border-radius:10px; margin-bottom:5px;">
+                    <div style="font-size:0.7rem; font-weight:bold;">${item.name}</div>
+                    <div style="color:var(--gold); font-size:0.8rem; margin:5px 0;">Valor: $${Math.floor(item.boughtFor * 0.8)}</div>
+                    <button class="btn-sell" onclick="sellItem(${index})">VENDER</button>
                 </div>
             `).join('');
+        }
+
+        function sellItem(index) {
+            let item = inventory[index];
+            let price = Math.floor(item.boughtFor * 0.8);
+            balance += price;
+            inventory.splice(index, 1);
+            saveData();
+            renderMarket();
+            updateBalanceUI();
         }
 
         function endAuction() {
             const overlay = document.getElementById('overlay');
             overlay.classList.add('active');
-            let item = items[(level - 1) % items.length];
+            let itemTemplate = items[(level - 1) % items.length];
 
             if (lastBidder === "Tú") {
                 balance -= currentBid;
-                inventory.push({name: item.name, img: item.img});
+                inventory.push({
+                    name: itemTemplate.name, 
+                    img: itemTemplate.img,
+                    boughtFor: currentBid
+                });
                 level++;
                 document.getElementById('modal-title').innerText = "¡GANASTE!";
-                document.getElementById('modal-msg').innerText = "Objeto añadido a tu inventario.";
+                document.getElementById('modal-msg').innerText = "Objeto guardado. Puedes venderlo en el mercado.";
             } else {
-                document.getElementById('modal-title').innerText = "PERDISTE";
-                document.getElementById('modal-msg').innerText = "Te superaron en la puja.";
+                document.getElementById('modal-title').innerText = "DERROTA";
+                document.getElementById('modal-msg').innerText = "La subasta terminó sin éxito.";
             }
+            saveData();
+        }
+
+        function saveData() {
             localStorage.setItem('auction_balance', balance);
             localStorage.setItem('auction_level', level);
             localStorage.setItem('auction_inv', JSON.stringify(inventory));
@@ -224,9 +242,11 @@
             document.getElementById('hammer-btn').style.background = "var(--gold)";
             setTimeout(() => { 
                 botsBlocked = false; 
-                document.getElementById('hammer-btn').style.background = "#333";
+                document.getElementById('hammer-btn').style.background = "#444";
             }, 3000);
         }
+
+        updateBalanceUI();
     </script>
 </body>
 </html>
