@@ -78,133 +78,184 @@
         </div>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
-            authDomain: "grandauctioneer.firebaseapp.com",
-            projectId: "grandauctioneer",
-            storageBucket: "grandauctioneer.firebasestorage.app",
-            messagingSenderId: "779568791424",
-            appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  
+           <script>
+    // 1. CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
+        authDomain: "grandauctioneer.firebaseapp.com",
+        projectId: "grandauctioneer",
+        storageBucket: "grandauctioneer.firebasestorage.app",
+        messagingSenderId: "779568791424",
+        appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres"];
-        let state = { 
-            name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", history: [],
-            collection: JSON.parse(localStorage.getItem('myCollection')) || [],
-            currentObjImg: "", selectedArtIndex: null
-        };
+    // 2. VARIABLES DE ESTADO
+    const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Coleccionista de Dubái"];
+    let state = { 
+        name: "", 
+        balance: 25000, 
+        currentBid: 0, 
+        timer: 12, 
+        interval: null, 
+        leader: "", 
+        history: [],
+        collection: JSON.parse(localStorage.getItem('myCollection')) || [],
+        currentObjImg: "", 
+        selectedArtIndex: null
+    };
 
-        function login() {
-            state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999);
-            updateUI();
-            showScreen('screen-menu');
-        }
+    // 3. FUNCIONES DE NAVEGACIÓN
+    function login() {
+        state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999);
+        updateUI();
+        showScreen('screen-menu');
+    }
 
-        function updateUI() {
-            document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
-            document.getElementById('col-count').innerText = state.collection.length;
-        }
+    function updateUI() {
+        document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
+        document.getElementById('col-count').innerText = state.collection.length;
+    }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            updateUI();
-        }
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        updateUI();
+    }
 
-        async function startAuction() {
-            showScreen('screen-auction');
-            document.getElementById('item-title').innerText = "Llamando al MET...";
-            state.history = [];
-            try {
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting|statue');
-                const d = await r.json();
-                const objId = d.objectIDs[Math.floor(Math.random() * 100)];
-                const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
-                const od = await or.json();
-                state.currentObjImg = od.primaryImageSmall;
-                document.getElementById('item-img').src = state.currentObjImg;
-                document.getElementById('item-title').innerText = od.title;
-                state.currentBid = Math.floor(Math.random() * 5000) + 4000;
-                state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
-                state.timer = 12;
-                runAuction();
-            } catch(e) { showScreen('screen-menu'); }
-        }
-
-        function runAuction() {
-            clearInterval(state.interval);
-            state.interval = setInterval(() => {
-                state.timer--;
-                document.getElementById('ui-timer').innerText = state.timer;
-                document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
-                document.getElementById('bid-leader-name').innerText = "LÍDER: " + state.leader;
-                if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
-                    state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)]; state.timer = 8;
-                }
-                if(state.timer <= 0) { clearInterval(state.interval); finishAuction(); }
-            }, 1000);
-        }
-
-        function makeBid() {
-            if(state.balance < state.currentBid + 1000) return alert("Dinero insuficiente");
-            state.currentBid += 1000; state.leader = state.name; state.timer = 8;
-        }
-
-        async function finishAuction() {
-            if(state.leader === state.name) {
-                alert("¡PIEZA ADQUIRIDA!");
-                state.balance -= state.currentBid;
-                state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
-                localStorage.setItem('myCollection', JSON.stringify(state.collection));
-            }
-            syncFirebase();
-            showScreen('screen-menu');
-        }
-
-        function showCollection() {
-            showScreen('screen-collection');
-            const gallery = document.getElementById('gallery-content');
-            gallery.innerHTML = state.collection.map((art, index) => `
-                <div onclick="openSalePanel(${index})">
-                    <img src="${art.img}">
-                </div>
-            `).join('') || "<p style='grid-column:1/4;text-align:center;'>Galería vacía.</p>";
-        }
-
-        function openSalePanel(index) {
-            state.selectedArtIndex = index;
-            const art = state.collection[index];
-            const offer = Math.floor(art.cost * (0.5 + Math.random() * 1.5)); // Oferta entre 50% y 200% del costo original
+    // 4. LÓGICA DE SUBASTA (CON CORRECCIÓN PARA NO SALIRSE)
+    async function startAuction() {
+        showScreen('screen-auction');
+        document.getElementById('item-title').innerText = "Buscando lote en el museo...";
+        document.getElementById('item-img').src = ""; 
+        state.history = [];
+        
+        try {
+            const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting|statue|gold');
+            const d = await r.json();
+            const randomIndex = Math.floor(Math.random() * Math.min(d.objectIDs.length, 150));
+            const objId = d.objectIDs[randomIndex];
             
-            document.getElementById('sale-info').innerHTML = `Compraste esta pieza por <b>$${art.cost.toLocaleString()}</b>.<br>Te ofrecen: <b style="color:#44ff44">$${offer.toLocaleString()}</b>`;
-            document.getElementById('confirm-sale-btn').onclick = () => confirmSale(offer);
-            document.getElementById('sale-panel').classList.add('panel-open');
+            const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
+            const od = await or.json();
+
+            if(!od.primaryImageSmall) throw new Error("Sin imagen");
+
+            state.currentObjImg = od.primaryImageSmall;
+            document.getElementById('item-img').src = state.currentObjImg;
+            document.getElementById('item-title').innerText = od.title;
+        } catch(e) { 
+            console.log("Error de API, usando respaldo...");
+            state.currentObjImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
+            document.getElementById('item-img').src = state.currentObjImg;
+            document.getElementById('item-title').innerText = "Reliquia de Oro (Obra de Respaldo)";
         }
 
-        function closeSalePanel() {
-            document.getElementById('sale-panel').classList.remove('panel-open');
-        }
+        state.currentBid = Math.floor(Math.random() * 5000) + 4000;
+        state.leader = RIVALES[Math.floor(Math.random() * RIVALES.length)];
+        state.timer = 12;
+        addHistory(state.leader, state.currentBid);
+        runAuction();
+    }
 
-        async function confirmSale(amount) {
-            state.balance += amount;
-            state.collection.splice(state.selectedArtIndex, 1);
+    function runAuction() {
+        clearInterval(state.interval);
+        state.interval = setInterval(() => {
+            state.timer--;
+            document.getElementById('ui-timer').innerText = state.timer;
+            document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
+            document.getElementById('bid-leader-name').innerText = "LÍDER: " + state.leader;
+            document.getElementById('bid-leader-name').style.color = (state.leader === state.name) ? "#44ff44" : "#ff4444";
+
+            if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
+                state.currentBid += 1000;
+                state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
+                state.timer = 8;
+                addHistory(state.leader, state.currentBid);
+            }
+
+            if(state.timer <= 0) {
+                clearInterval(state.interval);
+                finishAuction();
+            }
+        }, 1000);
+    }
+
+    function makeBid() {
+        if(state.balance < state.currentBid + 1000) return alert("Dinero insuficiente");
+        state.currentBid += 1000;
+        state.leader = state.name;
+        state.timer = 8;
+        addHistory(state.name, state.currentBid);
+    }
+
+    function addHistory(user, amount) {
+        const line = `<div style="color:${user === state.name ? '#44ff44':'#ccc'}">${user}: $${amount.toLocaleString()}</div>`;
+        state.history.unshift(line);
+        if(state.history.length > 3) state.history.pop();
+        document.getElementById('history-lines').innerHTML = state.history.join('');
+    }
+
+    async function finishAuction() {
+        if(state.leader === state.name) {
+            alert("¡PIEZA ADQUIRIDA!");
+            state.balance -= state.currentBid;
+            state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
             localStorage.setItem('myCollection', JSON.stringify(state.collection));
-            closeSalePanel();
-            syncFirebase();
-            showCollection();
+        } else {
+            alert("Subasta terminada. Ganó: " + state.leader);
         }
+        syncFirebase();
+        showScreen('screen-menu');
+    }
 
-        async function syncFirebase() {
-            updateUI();
+    // 5. COLECCIÓN Y VENTAS
+    function showCollection() {
+        showScreen('screen-collection');
+        const gallery = document.getElementById('gallery-content');
+        gallery.innerHTML = state.collection.map((art, index) => `
+            <div onclick="openSalePanel(${index})">
+                <img src="${art.img}">
+            </div>
+        `).join('') || "<p style='grid-column:1/4;text-align:center;'>Galería vacía.</p>";
+    }
+
+    function openSalePanel(index) {
+        state.selectedArtIndex = index;
+        const art = state.collection[index];
+        const offer = Math.floor(art.cost * (0.5 + Math.random() * 1.5));
+        document.getElementById('sale-info').innerHTML = `Costo original: <b>$${art.cost.toLocaleString()}</b>.<br>Oferta actual: <b style="color:#44ff44">$${offer.toLocaleString()}</b>`;
+        document.getElementById('confirm-sale-btn').onclick = () => confirmSale(offer);
+        document.getElementById('sale-panel').classList.add('panel-open');
+    }
+
+    function closeSalePanel() {
+        document.getElementById('sale-panel').classList.remove('panel-open');
+    }
+
+    async function confirmSale(amount) {
+        state.balance += amount;
+        state.collection.splice(state.selectedArtIndex, 1);
+        localStorage.setItem('myCollection', JSON.stringify(state.collection));
+        closeSalePanel();
+        syncFirebase();
+        showCollection();
+    }
+
+    // 6. RANKING Y SYNC
+    async function syncFirebase() {
+        updateUI();
+        try {
             await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true });
-        }
+        } catch(e) { console.log("Error sync Firebase"); }
+    }
 
-        async function showLeaderboard() {
-            showScreen('screen-rank');
-            document.getElementById('rank-content').innerHTML = "Cargando...";
+    async function showLeaderboard() {
+        showScreen('screen-rank');
+        document.getElementById('rank-content').innerHTML = "Cargando...";
+        try {
             const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
             let html = "";
             snap.forEach(doc => {
@@ -212,7 +263,9 @@
                 html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`;
             });
             document.getElementById('rank-content').innerHTML = html;
-        }
-    </script>
+        } catch(e) { document.getElementById('rank-content').innerHTML = "Error al cargar ranking."; }
+    }
+</script>
+
 </body>
 </html>
