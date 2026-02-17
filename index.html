@@ -3,73 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold | Fast Load Edition</title>
+    <title>Auction Arena Gold | Luxury Edition</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
     <style>
-        :root { --gold: #c5a059; --bg: #0a0a0a; --green: #44ff44; --red: #ff4444; }
-        body { background: var(--bg); color: #fff; font-family: 'Georgia', serif; margin: 0; overflow: hidden; }
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; background: var(--bg); padding: 20px; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        :root { 
+            --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f7e0a1 50%, #c5a059 100%);
+            --dark-bg: #050505;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --gold: #c5a059;
+            --green: #44ff44;
+        }
+
+        body { 
+            background: var(--dark-bg); 
+            color: #fff; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            overflow: hidden;
+            background-image: radial-gradient(circle at top right, #1a1a1a, #050505);
+        }
+        
+        /* Animaciones */
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes shine { from { left: -100%; } to { left: 100%; } }
+
+        .screen { 
+            position: fixed; inset: 0; display: none; flex-direction: column; 
+            padding: 25px; box-sizing: border-box;
+            animation: slideUp 0.5s ease-out;
+        }
         .active { display: flex; }
-        .btn { background: var(--gold); border: none; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; color: #000; text-transform: uppercase; border-radius: 8px; transition: 0.1s; }
-        .btn:active { transform: scale(0.95); filter: brightness(1.2); }
-        #img-container { height: 35vh; width: 100%; background: #111; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--gold); position: relative; overflow: hidden; }
-        #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.3s; z-index: 2; }
-        .loader { position: absolute; border: 4px solid #333; border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+
+        /* Estilo del Menú Principal */
+        .header-title {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .header-title h1 {
+            font-family: 'Georgia', serif;
+            font-size: 2.5rem;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .header-title p {
+            color: #666;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Tarjeta de Saldo Pro */
+        .balance-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin: 40px 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .balance-card small {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .balance-card div {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-top: 10px;
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
+        }
+
+        /* Botones Pro */
+        .btn-main {
+            background: var(--gold-gradient);
+            color: #000;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2);
+            margin-bottom: 15px;
+        }
+
+        .btn-main::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shine 3s infinite;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.03);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+        /* Stats rápidas */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-item small { display: block; color: #666; font-size: 0.6rem; margin-bottom: 5px; text-transform: uppercase; }
+        .stat-item b { color: var(--gold); font-size: 1.1rem; }
+
+        /* Elementos de Subasta (Mantenidos) */
+        #img-container { height: 35vh; background: #000; border-radius: 15px; overflow: hidden; position: relative; border: 1px solid #222; }
+        #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.4s; }
+        .loader { position: absolute; border: 3px solid #111; border-top: 3px solid var(--gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; top: 45%; left: 45%; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .leader-glow { border: 2px solid var(--green) !important; box-shadow: 0 0 15px var(--green); }
-        .history-box { height: 60px; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 8px; border-left: 2px solid var(--gold); margin-bottom: 10px; }
-        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
-        .grid-gallery div { aspect-ratio: 1; border: 1px solid #333; overflow: hidden; background: #111; }
+
+        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
+        .grid-gallery div { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #222; }
         .grid-gallery img { width: 100%; height: 100%; object-fit: cover; }
-        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #111; padding: 20px; border-top: 3px solid var(--gold); transition: 0.4s; z-index: 20; box-sizing: border-box; }
-        .panel-open { bottom: 0 !important; }
     </style>
 </head>
 <body>
 
-    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center;">
-        <h1 style="color:var(--gold); letter-spacing: 5px;">AUCTION ARENA</h1>
-        <input type="text" id="player-name" placeholder="Tu Nombre" style="padding:15px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white; border-radius: 5px;">
-        <button class="btn" onclick="login()">ENTRAR</button>
-    </div>
-
-    <div id="screen-menu" class="screen" style="align-items:center;">
-        <h2 style="color:var(--gold); margin-top: 40px;">ESTUDIO PRIVADO</h2>
-        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: center; width: 80%; margin: 20px 0;">
-            <small style="color:var(--gold)">SALDO</small>
-            <div id="ui-bal" style="font-size: 2rem; font-weight: bold;">$25,000</div>
+    <div id="screen-login" class="screen active" style="justify-content: center; align-items: center;">
+        <div class="header-title">
+            <h1>Auction Arena</h1>
+            <p>Privé Collector Club</p>
         </div>
-        <button class="btn" onclick="startAuction()">SUBASTA RÁPIDA</button>
-        <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">COLECCIÓN (<span id="col-count">0</span>)</button>
-        <button class="btn" style="background:transparent; color:#555; border: 1px solid #333;" onclick="showLeaderboard()">RANKING</button>
+        <input type="text" id="player-name" placeholder="Postor ID" style="margin-top:40px; background:rgba(255,255,255,0.05); border:1px solid #333; padding:18px; width:80%; border-radius:12px; color:#fff; text-align:center;">
+        <button class="btn-main" onclick="login()" style="width:80%; margin-top:20px;">VERIFICAR IDENTIDAD</button>
     </div>
 
-    <div id="screen-auction" class="screen" style="padding:0;">
+    <div id="screen-menu" class="screen">
+        <div class="header-title" style="margin-top:20px;">
+            <h1>Elite Member</h1>
+            <p>Global Auction Access</p>
+        </div>
+
+        <div class="balance-card">
+            <small>Capital Líquido</small>
+            <div id="ui-bal">$25,000</div>
+        </div>
+
+        <button class="btn-main" onclick="startAuction()">ENTRAR A LA SUBASTA</button>
+        
+        <div class="quick-stats">
+            <div class="stat-item" onclick="showCollection()">
+                <small>Colección</small>
+                <b id="col-count">0</b>
+            </div>
+            <div class="stat-item" onclick="showLeaderboard()">
+                <small>Prestigio</small>
+                <b>TOP 10</b>
+            </div>
+        </div>
+
+        <p style="text-align:center; color:#333; font-size:0.6rem; margin-top:auto;">ESTE CLUB SE RESERVA EL DERECHO DE ADMISIÓN</p>
+    </div>
+
+    <div id="screen-auction" class="screen">
         <div id="img-container">
             <div class="loader" id="auction-loader"></div>
             <img id="item-img" src="">
         </div>
-        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
-            <h2 id="item-title" style="margin:0; font-size: 1.1rem; height: 2.4em; overflow: hidden; color: var(--gold);">Cargando Lote...</h2>
-            <div id="bid-status" style="margin: 10px 0; padding: 10px; text-align: center; border: 1px solid #333; font-weight: bold;">
-                <span id="bid-leader-name">---</span>
-            </div>
-            <div id="history-lines" class="history-box"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                <div><small style="color:#888">OFERTA</small><div style="font-size: 1.8rem; font-weight: bold;">$<span id="ui-bid">0</span></div></div>
-                <div id="ui-timer" style="font-size: 2.5rem; color:var(--red); font-weight: bold;">--</div>
-            </div>
-            <button class="btn" onclick="makeBid()" style="margin-top: 15px;">PUJAR +$1,000</button>
+        <h2 id="item-title" style="font-size:1.1rem; color:var(--gold); margin: 20px 0 10px;">Cargando...</h2>
+        <div id="bid-status" style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; text-align:center; margin-bottom:15px; border:1px solid #222;">
+            <span id="bid-leader-name" style="font-weight:bold; letter-spacing:1px;">SIN OFERTAS</span>
         </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><small style="color:#666">OFERTA</small><br><span id="ui-bid" style="font-size:1.8rem; font-weight:800;">$0</span></div>
+            <div id="ui-timer" style="font-size:2.5rem; font-weight:900; color:var(--red);">--</div>
+        </div>
+        <button class="btn-main" onclick="makeBid()" style="margin-top:20px;">HACER OFERTA (+1k)</button>
+        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="margin-top:10px;">RETIRARSE</button>
     </div>
 
-    <div id="screen-collection" class="screen"><h2>COLECCIÓN</h2><div id="gallery-content" class="grid-gallery"></div><button class="btn" onclick="showScreen('screen-menu')">VOLVER</button></div>
-    <div id="screen-rank" class="screen"><h2>TOP 10</h2><div id="rank-content"></div><button class="btn" onclick="showScreen('screen-menu')">VOLVER</button></div>
-    <div id="sale-panel"><h3>OFERTA</h3><p id="sale-info"></p><button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER</button><button class="btn" onclick="closeSalePanel()">CANCELAR</button></div>
+    <div id="screen-collection" class="screen">
+        <h2 style="color:var(--gold); letter-spacing:2px;">MI BÓVEDA</h2>
+        <div id="gallery-content" class="grid-gallery"></div>
+        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="margin-top:auto;">REGRESAR</button>
+    </div>
+
+    <div id="screen-rank" class="screen">
+        <h2 style="color:var(--gold); letter-spacing:2px; text-align:center;">LÍDERES GLOBALES</h2>
+        <div id="rank-content" style="margin:20px 0; flex-grow:1;"></div>
+        <button class="btn-secondary" onclick="showScreen('screen-menu')">VOLVER</button>
+    </div>
 
     <script>
+        // CONFIG FIREBASE (Tus datos)
         const firebaseConfig = {
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -81,7 +239,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const RIVALES = ["Magnate Suizo", "Barón von Art", "Jeque Dubái", "Inversor NY"];
+        const RIVALES = ["Magnate Suizo", "Barón von Art", "Jeque de Dubái", "Inversor NY"];
         let state = { name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", collection: JSON.parse(localStorage.getItem('myCollection')) || [] };
 
         function login() { state.name = document.getElementById('player-name').value || "Postor"; showScreen('screen-menu'); }
@@ -98,34 +256,22 @@
             document.getElementById('ui-timer').innerText = "--";
             img.style.opacity = "0";
             loader.style.display = "block";
-            title.innerText = "Buscando pieza rara...";
+            title.innerText = "Consultando catálogo...";
 
-            // PLAN DE CARGA ULTRA RÁPIDA
-            let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`; // Respaldo instantáneo
+            let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`;
             let finalTitle = "Obra Contemporánea";
 
             try {
-                // Solo esperamos 2 segundos a la API del museo
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|jewel', { signal: controller.signal });
+                setTimeout(() => controller.abort(), 2000);
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold', { signal: controller.signal });
                 const d = await r.json();
                 const objId = d.objectIDs[Math.floor(Math.random() * 100)];
-                
                 const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`, { signal: controller.signal });
                 const od = await or.json();
-                
-                if(od.primaryImageSmall) {
-                    finalImg = od.primaryImageSmall;
-                    finalTitle = od.title;
-                }
-                clearTimeout(timeoutId);
-            } catch(e) {
-                console.log("Servidor MET lento, usando respaldo rápido.");
-            }
+                if(od.primaryImageSmall) { finalImg = od.primaryImageSmall; finalTitle = od.title; }
+            } catch(e) {}
 
-            // Precarga forzada
             const tempImg = new Image();
             tempImg.src = finalImg;
             tempImg.onload = () => {
@@ -134,37 +280,31 @@
                 loader.style.display = "none";
                 title.innerText = finalTitle;
                 state.currentObjImg = finalImg;
-                iniciarReloj();
+                iniciarSubasta();
             };
         }
 
-        function iniciarReloj() {
+        function iniciarSubasta() {
             state.currentBid = Math.floor(Math.random() * 5000) + 4000;
             state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
             state.timer = 12;
-            runAuction();
-        }
-
-        function runAuction() {
             state.interval = setInterval(() => {
                 state.timer--;
                 document.getElementById('ui-timer').innerText = state.timer;
-                document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
+                document.getElementById('ui-bid').innerText = "$" + state.currentBid.toLocaleString();
                 document.getElementById('bid-leader-name').innerText = "LÍDER: " + state.leader;
-                
                 if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
                     state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
-                    state.timer = 8;
                 }
-                if(state.timer <= 0) { clearInterval(state.interval); finishAuction(); }
+                if(state.timer <= 0) { clearInterval(state.interval); terminarSubasta(); }
             }, 1000);
         }
 
-        function makeBid() { if(state.balance >= state.currentBid+1000){ state.currentBid += 1000; state.leader = state.name; state.timer = 8; } }
+        function makeBid() { if(state.balance >= state.currentBid+1000){ state.currentBid += 1000; state.leader = state.name; } }
 
-        async function finishAuction() {
+        async function terminarSubasta() {
             if(state.leader === state.name) {
-                alert("¡GANASTE!");
+                alert("PIEZA ADQUIRIDA");
                 state.balance -= state.currentBid;
                 state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
                 localStorage.setItem('myCollection', JSON.stringify(state.collection));
@@ -174,27 +314,15 @@
 
         function showCollection() {
             showScreen('screen-collection');
-            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `<div onclick="openSalePanel(${i})"><img src="${art.img}"></div>`).join('') || "Vacío";
+            document.getElementById('gallery-content').innerHTML = state.collection.map((art) => `<div><img src="${art.img}"></div>`).join('');
         }
 
-        function openSalePanel(i) {
-            const offer = Math.floor(state.collection[i].cost * (0.7 + Math.random()));
-            document.getElementById('sale-info').innerText = "Oferta: $" + offer.toLocaleString();
-            document.getElementById('confirm-sale-btn').onclick = () => {
-                state.balance += offer;
-                state.collection.splice(i, 1);
-                localStorage.setItem('myCollection', JSON.stringify(state.collection));
-                closeSalePanel(); syncFirebase(); showCollection();
-            };
-            document.getElementById('sale-panel').classList.add('panel-open');
-        }
-
-        function closeSalePanel() { document.getElementById('sale-panel').classList.remove('panel-open'); }
         async function syncFirebase() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {} }
+        
         async function showLeaderboard() {
             showScreen('screen-rank');
             const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
-            let html = ""; snap.forEach(doc => { const p = doc.data(); html += `<div>${p.name}: $${p.balance.toLocaleString()}</div>`; });
+            let html = ""; snap.forEach(doc => { const p = doc.data(); html += `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid #111;"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`; });
             document.getElementById('rank-content').innerHTML = html;
         }
     </script>
