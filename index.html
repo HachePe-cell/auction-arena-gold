@@ -3,161 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Auctioneer: Museum Edition</title>
+    <title>Grand Auctioneer: Global Edition</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
     <style>
-        :root { --gold: #c5a059; --bg: #0a0a0a; --accent: #8b0000; }
+        :root { --gold: #c5a059; --bg: #0a0a0a; }
         body { background: var(--bg); color: #fff; font-family: 'Times New Roman', serif; margin: 0; overflow: hidden; }
-        
-        /* UI Estilo Museo */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; z-index: 10; background: var(--bg); }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; background: var(--bg); padding: 20px; }
         .active { display: flex; }
-        
-        .gallery-frame { 
-            width: 100%; height: 45vh; background: #000; display: flex; align-items: center; 
-            justify-content: center; border-bottom: 2px solid var(--gold); position: relative;
-        }
-        #item-img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s; }
-
-        .info-panel { padding: 20px; flex-grow: 1; background: linear-gradient(to bottom, #111, #000); }
-        .btn-auction { 
-            background: var(--gold); color: #000; border: none; padding: 18px; 
-            font-weight: bold; width: 100%; font-size: 1.2rem; cursor: pointer;
-        }
-
-        /* Animación de Martillazo */
-        .hammer-flash { animation: flashRed 0.3s; }
-        @keyframes flashRed { 0% { background: var(--accent); } 100% { background: var(--bg); } }
-
-        #loader { 
-            position: absolute; inset: 0; background: rgba(0,0,0,0.9); 
-            display: none; align-items: center; justify-content: center; z-index: 100;
-        }
+        .btn { background: var(--gold); border: none; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; }
+        .rank-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        #item-img { max-height: 40vh; object-fit: contain; border-bottom: 2px solid var(--gold); }
     </style>
 </head>
-<body id="main-body">
+<body>
 
-    <div id="screen-menu" class="screen active" style="align-items: center; justify-content: center;">
-        <h1 style="color: var(--gold); letter-spacing: 5px;">GRAND AUCTIONEER</h1>
-        <div style="font-size: 1.5rem; margin-bottom: 30px;">Saldo: $<span id="display-bal">25,000</span></div>
-        <button class="btn-auction" style="width: 280px;" onclick="fetchObject()">INICIAR SUBASTA</button>
-        <p id="conn-status" style="font-size: 0.7rem; color: #555; margin-top: 10px;">Sistema Listo</p>
+    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center;">
+        <h1 style="color:var(--gold)">IDENTIFICACIÓN</h1>
+        <input type="text" id="player-name" placeholder="Tu nombre de coleccionista" style="padding:10px; width:80%; text-align:center;">
+        <button class="btn" onclick="login()">ENTRAR AL CLUB</button>
+    </div>
+
+    <div id="screen-menu" class="screen" style="align-items:center;">
+        <h1 style="color:var(--gold)">GRAND AUCTIONEER</h1>
+        <p>Saldo: <span id="ui-bal" style="color:var(--gold)">$25,000</span></p>
+        <button class="btn" onclick="startAuction()">NUEVA SUBASTA (MET)</button>
+        <button class="btn" style="background:#222; color:var(--gold)" onclick="showLeaderboard()">RANKING MUNDIAL</button>
     </div>
 
     <div id="screen-auction" class="screen">
-        <div id="loader">Cargando Lote Real...</div>
-        <div class="gallery-frame"><img id="item-img" src=""></div>
-        <div class="info-panel">
-            <div id="item-dept" style="color: var(--gold); font-size: 0.7rem; letter-spacing: 2px;">GALERÍA PRIVADA</div>
-            <h2 id="item-title" style="margin: 10px 0;">---</h2>
-            <div id="bid-box" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                <div>
-                    <small>OFERTA</small>
-                    <div style="font-size: 2.2rem; color: var(--gold); font-weight: bold;">$<span id="live-bid">0</span></div>
-                </div>
-                <div id="timer" style="font-size: 2.5rem; font-weight: bold; color: var(--accent);">10</div>
-            </div>
-            <button class="btn-auction" style="margin-top: 25px;" onclick="placeBid()">PUJAR +$1,000</button>
-        </div>
+        <img id="item-img" src="">
+        <h2 id="item-title">---</h2>
+        <div style="font-size: 2rem; color:var(--gold);">$<span id="ui-bid">0</span></div>
+        <div id="ui-timer" style="font-size: 1.5rem; color:red;">10s</div>
+        <button class="btn" onclick="makeBid()">OFERTAR +$1,000</button>
+    </div>
+
+    <div id="screen-rank" class="screen">
+        <h2 style="color:var(--gold); text-align:center;">TOP 10 MUNDIAL</h2>
+        <div id="rank-content" style="flex-grow:1;">Cargando...</div>
+        <button class="btn" onclick="showScreen('screen-menu')">VOLVER</button>
     </div>
 
     <script>
-        let balance = 25000;
-        let currentBid = 0;
-        let timeLeft = 10;
-        let auctionInterval;
+        // --- PEGA TUS DATOS DE FIREBASE AQUÍ ---
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-        // --- BASE DE DATOS OFFLINE (Backup) ---
-        const OFFLINE_COLLECTION = [
-            { title: "Cetro de Oro Ceremonial", dept: "Antigüedades Egipcias", img: "https://images.pexels.com/photos/3354675/pexels-photo-3354675.jpeg?auto=compress&cs=tinysrgb&w=400", date: "1300 a.C." },
-            { title: "Reloj de Bolsillo Imperial", dept: "Relojería Europea", img: "https://images.pexels.com/photos/210545/pexels-photo-210545.jpeg?auto=compress&cs=tinysrgb&w=400", date: "Siglo XVIII" },
-            { title: "Vaso de Dinastía Ming", dept: "Arte Asiático", img: "https://images.pexels.com/photos/1080646/pexels-photo-1080646.jpeg?auto=compress&cs=tinysrgb&w=400", date: "1450 d.C." }
-        ];
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
+  authDomain: "grandauctioneer.firebaseapp.com",
+  projectId: "grandauctioneer",
+  storageBucket: "grandauctioneer.firebasestorage.app",
+  messagingSenderId: "779568791424",
+  appId: "1:779568791424:web:c71c5fd48c541755ed0b65",
+  measurementId: "G-H1FXFMF1NG"
+};
 
-        async function fetchObject() {
-            showScreen('screen-auction');
-            const loader = document.getElementById('loader');
-            loader.style.display = 'flex';
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-            try {
-                // Intento de conexión con timeout de 4 segundos
-                const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), 4000);
+        let state = { name: "", balance: 25000, currentBid: 0, timer: 10, interval: null };
 
-                const res = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold', { signal: controller.signal });
-                const data = await res.json();
-                const objId = data.objectIDs[Math.floor(Math.random() * 100)];
-
-                const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`, { signal: controller.signal });
-                const objData = await objRes.json();
-                clearTimeout(id);
-
-                if(!objData.primaryImageSmall) throw "No Image";
-                
-                setupGame(objData.title, objData.department, objData.primaryImageSmall);
-                document.getElementById('conn-status').innerText = "Conectado al MET Museum";
-
-            } catch (e) {
-                // MODO OFFLINE ACTIVADO
-                const backup = OFFLINE_COLLECTION[Math.floor(Math.random() * OFFLINE_COLLECTION.length)];
-                setupGame(backup.title, backup.dept, backup.img);
-                document.getElementById('conn-status').innerText = "Modo Offline (Caché)";
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-
-        function setupGame(title, dept, img) {
-            document.getElementById('item-title').innerText = title;
-            document.getElementById('item-dept').innerText = dept;
-            document.getElementById('item-img').src = img;
-            currentBid = Math.floor(Math.random() * 5000) + 1000;
-            timeLeft = 10;
-            updateUI();
-            startAuction();
-        }
-
-        function startAuction() {
-            clearInterval(auctionInterval);
-            auctionInterval = setInterval(() => {
-                timeLeft -= 1;
-                document.getElementById('timer').innerText = timeLeft;
-                
-                // IA Competidora
-                if(timeLeft > 1 && Math.random() > 0.8) {
-                    currentBid += 1000;
-                    updateUI();
-                }
-
-                if(timeLeft <= 0) {
-                    clearInterval(auctionInterval);
-                    finishAuction();
-                }
-            }, 1000);
-        }
-
-        function placeBid() {
-            currentBid += 1000;
-            timeLeft = 6;
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('live-bid').innerText = currentBid.toLocaleString();
-            document.getElementById('display-bal').innerText = balance.toLocaleString();
-        }
-
-        function finishAuction() {
-            document.getElementById('main-body').classList.add('hammer-flash');
-            setTimeout(() => {
-                document.getElementById('main-body').classList.remove('hammer-flash');
-                alert("¡SUBASTA TERMINADA! El precio final fue: $" + currentBid.toLocaleString());
-                showScreen('screen-menu');
-            }, 300);
+        function login() {
+            state.name = document.getElementById('player-name').value || "Anónimo";
+            showScreen('screen-menu');
         }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
+        }
+
+        async function startAuction() {
+            showScreen('screen-auction');
+            document.getElementById('item-title').innerText = "Buscando en el museo...";
+            
+            try {
+                // Lógica del MET Museum
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold');
+                const d = await r.json();
+                const objId = d.objectIDs[Math.floor(Math.random() * 50)];
+                const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
+                const od = await or.json();
+
+                document.getElementById('item-img').src = od.primaryImageSmall;
+                document.getElementById('item-title').innerText = od.title;
+                state.currentBid = Math.floor(Math.random() * 5000) + 1000;
+                state.timer = 10;
+                runAuction();
+            } catch(e) { 
+                alert("Error de conexión. Prueba de nuevo.");
+                showScreen('screen-menu');
+            }
+        }
+
+        function runAuction() {
+            clearInterval(state.interval);
+            state.interval = setInterval(() => {
+                state.timer--;
+                document.getElementById('ui-timer').innerText = state.timer + "s";
+                document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
+                
+                if(Math.random() > 0.8) state.currentBid += 1000;
+                if(state.timer <= 0) {
+                    clearInterval(state.interval);
+                    finishAuction();
+                }
+            }, 1000);
+        }
+
+        function makeBid() {
+            state.currentBid += 1000;
+            state.timer = 6;
+        }
+
+        async function finishAuction() {
+            alert("¡Subasta cerrada!");
+            state.balance -= 1000; // Simulación de gasto/comisión
+            await db.collection("leaderboard").doc(state.name).set({
+                name: state.name,
+                balance: state.balance
+            }, { merge: true });
+            showScreen('screen-menu');
+        }
+
+        async function showLeaderboard() {
+            showScreen('screen-rank');
+            const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
+            let html = "";
+            snap.forEach(doc => {
+                const p = doc.data();
+                html += `<div class="rank-row"><span>${p.name}</span><span>$${p.balance.toLocaleString()}</span></div>`;
+            });
+            document.getElementById('rank-content').innerHTML = html;
         }
     </script>
 </body>
