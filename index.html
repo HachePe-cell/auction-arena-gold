@@ -1,316 +1,253 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="es">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2022.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-    span.s1 {font: 12.0px 'Apple Color Emoji'}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Arena Gold - El Juego</title>
+    <style>
+        :root {
+            --gold: #ffd700;
+            --dark-bg: #0f0f0f;
+            --card-bg: #1e1e1e;
+            --accent: #ff4500;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            justify-content: center;
+        }
+
+        .ad-space {
+            width: 100%;
+            max-width: 728px;
+            height: 60px; /* Reducido para mejor visibilidad */
+            background: #222;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 0.7rem;
+            border: 1px dashed #444;
+        }
+
+        #game-board {
+            width: 90%;
+            max-width: 400px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        #item-display {
+            border: 2px solid #444;
+            border-radius: 15px;
+            padding: 15px;
+            background: linear-gradient(145deg, #252525, #1a1a1a);
+            text-align: center;
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-bid { background: var(--gold); color: #000; font-size: 1.1rem; }
+        .btn-powerup { background: #444; color: var(--gold); border: 1px solid var(--gold); }
+        .btn-ad { background: #28a745; color: white; grid-column: span 2; margin-top: 5px; }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="es"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Auction Arena Gold - El Juego&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--gold: #ffd700;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--dark-bg: #0f0f0f;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--card-bg: #1e1e1e;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent: #ff4500;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--common: #b2b2b2;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--rare: #00ceff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--epic: #a335ee;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--legendary: #ff8c00;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--dark-bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: 'Inter', sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>min-height: 100vh;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Contenedores para AdSense */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.ad-space {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 728px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 90px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #222;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 10px 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #555;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.8rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px dashed #444;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#game-board {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 95%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 500px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: var(--card-bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 2px solid #333;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(0,0,0,0.5);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.stats {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--gold);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#item-display {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 2px solid #444;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(145deg, #252525, #1a1a1a);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.timer-container {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #333;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 15px 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#timer-bar {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: width 0.1s linear;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.controls {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: grid;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>grid-template-columns: 1fr 1fr;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>button {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: transform 0.1s;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-bid { background: var(--gold); color: #000; font-size: 1.1rem; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-powerup { background: #444; color: var(--gold); border: 1px solid var(--gold); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-ad { background: #28a745; color: white; grid-column: span 2; margin-top: 10px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>button:disabled { opacity: 0.5; cursor: not-allowed; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>button:active { transform: scale(0.95); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.log {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.9rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #aaa;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-top: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 40px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Modal simple */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#overlay {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>top: 0; left: 0; width: 100%; height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0,0,0,0.9);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>z-index: 100;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="ad-space" id="ads-container-top"&gt;Espacio para Anuncio Superior&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="game-board"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="stats"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;span&gt;<span class="s1">💰</span> &lt;span id="balance"&gt;1000&lt;/span&gt;&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;span&gt;Nivel: &lt;span id="level"&gt;1&lt;/span&gt;&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="item-display"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;small id="rarity-text" style="letter-spacing: 2px;"&gt;&lt;/small&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 id="item-name" style="margin: 5px 0;"&gt;Cargando...&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;p id="item-desc" style="font-size: 0.8rem; color: #888;"&gt;&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div style="font-size: 1.5rem; margin: 10px 0;"&gt;Puja: &lt;span id="current-bid" style="color: var(--gold);"&gt;0&lt;/span&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="winner-text" style="font-size: 0.9rem;"&gt;Esperando ofertas...&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="timer-container"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="timer-bar"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="controls"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn-bid" id="bid-btn" onclick="playerBid()"&gt;PUJAR (+50)&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn-powerup" id="hammer-btn" onclick="useHammer()"&gt;<span class="s1">🔨</span> MAZO (1)&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn-ad" id="ad-btn" onclick="watchAd()"&gt;<span class="s1">📺</span> Ver anuncio (+$500)&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="log" id="game-log"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="overlay"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;h1 id="modal-title"&gt;¡Subasta Terminada!&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;p id="modal-msg"&gt;&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button onclick="closeModal()" style="background: var(--gold); padding: 10px 40px;"&gt;CONTINUAR&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="ad-space" id="ads-container-bottom"&gt;Espacio para Anuncio Inferior&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Configuración y Estado</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let balance = parseInt(localStorage.getItem('auction_balance')) || 1000;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let level = parseInt(localStorage.getItem('auction_level')) || 1;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let currentBid = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let timeLeft = 12;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let timerInterval;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let lastBidder = "Nadie";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let hammerAvailable = true;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let botsBlocked = false;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const items = [</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Daga de las Sombras", desc: "Silenciosa y mortal.", rarity: "COMÚN", color: "#b2b2b2", base: 100 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Capa de Invisibilidad", desc: "Tejida con hilos de niebla.", rarity: "RARO", color: "#00ceff", base: 500 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Anillo del Poder", desc: "Un brillo tentador y peligroso.", rarity: "ÉPICO", color: "#a335ee", base: 1200 },</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{ name: "Cetro del Rey Sol", desc: "Emana un calor eterno.", rarity: "LEGENDARIO", color: "#ff8c00", base: 3000 }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function initLevel() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let itemIdx = (level - 1) % items.length;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let item = items[itemIdx];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentBid = item.base + (level * 20);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timeLeft = 12;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>lastBidder = "Nadie";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>hammerAvailable = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>botsBlocked = false;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('item-name').innerText = item.name;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('item-desc').innerText = item.desc;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('rarity-text').innerText = item.rarity;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('rarity-text').style.color = item.color;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('item-display').style.borderColor = item.color;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('hammer-btn').disabled = false;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateUI();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>startTimer();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function startTimer() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>clearInterval(timerInterval);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timerInterval = setInterval(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>timeLeft -= 0.1;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('timer-bar').style.width = (timeLeft / 12 * 100) + "%";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Lógica de Bots (IA)</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (!botsBlocked &amp;&amp; timeLeft &gt; 1 &amp;&amp; Math.random() &gt; 0.96) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>botBid();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (timeLeft &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>endAuction();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 100);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function playerBid() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (balance &gt;= currentBid + 50) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>currentBid += 50;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>lastBidder = "Tú";</p>
-<p class="p1"><span class="Apple-converted-space">                </span>timeLeft = Math.min(timeLeft + 2, 5); // Reinicia a 5 seg si queda poco</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateUI();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>log("¡Has pujado!");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function botBid() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentBid += 50;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>lastBidder = "Bot " + ["Agresivo", "Francotirador", "Caótico"][Math.floor(Math.random()*3)];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timeLeft = Math.min(timeLeft + 2, 5);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateUI();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>log(lastBidder + " ha pujado...");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function useHammer() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (hammerAvailable) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>botsBlocked = true;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>hammerAvailable = false;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('hammer-btn').disabled = true;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>log("<span class="s1">🔨</span> ¡MAZO DE JUEZ! Bots bloqueados 3s");</p>
-<p class="p1"><span class="Apple-converted-space">                </span>setTimeout(() =&gt; { botsBlocked = false; log("Los bots vuelven a pujar..."); }, 3000);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function watchAd() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>log("<span class="s1">📺</span> Viendo anuncio... (5s)");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('ad-btn').disabled = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>balance += 500;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateUI();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>log("<span class="s1">💰</span> ¡Recibiste $500 por el anuncio!");</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('ad-btn').disabled = false;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 5000);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function updateUI() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('balance').innerText = balance;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('level').innerText = level;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('current-bid').innerText = "$" + currentBid;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('winner-text').innerText = "Líder actual: " + lastBidder;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>localStorage.setItem('auction_balance', balance);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>localStorage.setItem('auction_level', level);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function log(msg) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('game-log').innerText = msg;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function endAuction() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>clearInterval(timerInterval);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const overlay = document.getElementById('overlay');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const msg = document.getElementById('modal-msg');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>overlay.style.display = "flex";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (lastBidder === "Tú") {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>balance -= currentBid;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>level++;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>msg.innerText = "¡Felicidades! Ganaste el objeto. Tu nivel aumenta.";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>msg.innerText = "Perdiste la subasta. " + lastBidder + " se llevó el objeto.";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function closeModal() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('overlay').style.display = "none";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>initLevel();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>initLevel();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+    <div class="ad-space">Publicidad</div>
+
+    <div id="game-board">
+        <div class="stats">
+            <span>💰 <span id="balance">1000</span></span>
+            <span>Nivel: <span id="level">1</span></span>
+        </div>
+
+        <div id="item-display">
+            <small id="rarity-text"></small>
+            <h2 id="item-name" style="margin: 5px 0;">Cargando...</h2>
+            <div style="font-size: 1.3rem; margin: 10px 0;">Puja: <span id="current-bid" style="color: var(--gold);">0</span></div>
+            <div id="winner-text" style="font-size: 0.8rem; color: #aaa;">Esperando ofertas...</div>
+        </div>
+
+        <div class="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-bid" onclick="playerBid()">PUJAR (+50)</button>
+            <button class="btn-powerup" id="hammer-btn" onclick="useHammer()">🔨 MAZO</button>
+            <button class="btn-ad" id="ad-btn" onclick="watchAd()">📺 Fondos Extra (Anuncio)</button>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <h1 id="modal-title">Resultado</h1>
+        <p id="modal-msg"></p>
+        <button onclick="closeModal()" style="background: var(--gold); padding: 10px 40px;">CONTINUAR</button>
+    </div>
+
+    <script>
+        let balance = parseInt(localStorage.getItem('auction_balance')) || 1000;
+        let level = parseInt(localStorage.getItem('auction_level')) || 1;
+        let currentBid = 0;
+        let timeLeft = 12;
+        let timerInterval;
+        let lastBidder = "Nadie";
+        let botsBlocked = false;
+
+        const items = [
+            { name: "Daga de las Sombras", rarity: "COMÚN", color: "#b2b2b2", base: 100 },
+            { name: "Capa de Niebla", rarity: "RARO", color: "#00ceff", base: 500 },
+            { name: "Anillo Único", rarity: "ÉPICO", color: "#a335ee", base: 1200 },
+            { name: "Cetro Real", rarity: "LEGENDARIO", color: "#ff8c00", base: 3000 }
+        ];
+
+        function initLevel() {
+            let item = items[(level - 1) % items.length];
+            currentBid = item.base + (level * 20);
+            timeLeft = 12;
+            lastBidder = "Nadie";
+            botsBlocked = false;
+            
+            document.getElementById('item-name').innerText = item.name;
+            document.getElementById('rarity-text').innerText = item.rarity;
+            document.getElementById('rarity-text').style.color = item.color;
+            document.getElementById('item-display').style.borderColor = item.color;
+            document.getElementById('hammer-btn').disabled = false;
+            
+            updateUI();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                document.getElementById('timer-bar').style.width = (timeLeft / 12 * 100) + "%";
+
+                if (!botsBlocked && timeLeft > 1 && Math.random() > 0.97) {
+                    botBid();
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endAuction();
+                }
+            }, 100);
+        }
+
+        function playerBid() {
+            if (balance >= currentBid + 50) {
+                currentBid += 50;
+                lastBidder = "Tú";
+                timeLeft = Math.min(timeLeft + 2, 5);
+                updateUI();
+            }
+        }
+
+        function botBid() {
+            currentBid += 50;
+            lastBidder = "Bot " + ["A", "B", "C"][Math.floor(Math.random()*3)];
+            timeLeft = Math.min(timeLeft + 2, 5);
+            updateUI();
+        }
+
+        function useHammer() {
+            botsBlocked = true;
+            document.getElementById('hammer-btn').disabled = true;
+            setTimeout(() => { botsBlocked = false; }, 3000);
+        }
+
+        function watchAd() {
+            alert("Simulando anuncio de 5s...");
+            setTimeout(() => { balance += 500; updateUI(); }, 5000);
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = balance;
+            document.getElementById('level').innerText = level;
+            document.getElementById('current-bid').innerText = "$" + currentBid;
+            document.getElementById('winner-text').innerText = "Líder: " + lastBidder;
+            localStorage.setItem('auction_balance', balance);
+            localStorage.setItem('auction_level', level);
+        }
+
+        function endAuction() {
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = "flex";
+            if (lastBidder === "Tú") {
+                balance -= currentBid;
+                level++;
+                document.getElementById('modal-msg').innerText = "¡Ganaste!";
+            } else {
+                document.getElementById('modal-msg').innerText = "Perdiste contra " + lastBidder;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('overlay').style.display = "none";
+            initLevel();
+        }
+
+        initLevel();
+    </script>
 </body>
 </html>
