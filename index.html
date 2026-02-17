@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1479705494159422" crossorigin="anonymous"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auction Arena | Gold Audio Edition</title>
@@ -33,14 +34,15 @@
         .glass-card { background: var(--card-bg); border: 1px solid rgba(197, 160, 89, 0.2); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
 
         .btn-main { background: var(--gold-gradient); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); width: 100%; }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: rgba(255,255,255,0.03); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; }
 
-        .museum-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; overflow-y: auto; padding-bottom: 80px; }
+        .museum-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; overflow-y: auto; padding-bottom: 120px; }
         .art-card { background: #111; border-radius: 12px; overflow: hidden; border: 1px solid #222; position: relative; }
         .art-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .art-card .price-tag { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: var(--gold); font-size: 0.7rem; text-align: center; padding: 5px 0; }
 
-        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #0a0a0a; border-top: 3px solid var(--gold); padding: 30px 25px; box-sizing: border-box; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100; border-radius: 30px 30px 0 0; }
+        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #0a0a0a; border-top: 3px solid var(--gold); padding: 30px 25px; box-sizing: border-box; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 101; border-radius: 30px 30px 0 0; }
         .panel-open { bottom: 0 !important; }
 
         #img-container { height: 30vh; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #333; }
@@ -49,21 +51,12 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
-    <div id="ad-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; z-index: 1000; padding: 5px 0; border-top: 1px solid var(--gold);">
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:320px;height:50px"
-         data-ad-client="ca-pub-1479705494159422" 
-         data-ad-slot="XXXXXXXXXX"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-</div>
 <body>
 
     <div id="screen-login" class="screen active" style="justify-content: center;">
         <div class="header-title"><h1>AUCTION ARENA</h1><p style="text-align:center; color:#666">PRO COLLECTOR</p></div>
         <input type="text" id="player-name" placeholder="NOMBRE DEL POSTOR" style="background:rgba(255,255,255,0.05); border:1px solid #333; padding:18px; border-radius:12px; color:#fff; text-align:center; margin: 20px 0;">
-        <button class="btn-main" onclick="login()">INGRESAR AL CLUB</button>
+        <button class="btn-main" id="login-btn" onclick="login()">INGRESAR AL CLUB</button>
     </div>
 
     <div id="screen-menu" class="screen">
@@ -90,7 +83,7 @@
     <div id="screen-collection" class="screen">
         <div class="header-title"><h1>MI BÓVEDA</h1></div>
         <div id="gallery-content" class="museum-grid"></div>
-        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="position:fixed; bottom:20px; width:calc(100% - 50px)">VOLVER</button>
+        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="position:fixed; bottom:70px; width:calc(100% - 50px)">VOLVER</button>
     </div>
 
     <div id="sale-panel">
@@ -104,8 +97,16 @@
         </div>
     </div>
 
+    <div id="ad-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; display: none; justify-content: center; z-index: 1000; padding: 5px 0; border-top: 1px solid var(--gold); height: 60px;">
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:320px;height:50px"
+             data-ad-client="ca-pub-1479705494159422"
+             data-ad-slot="XXXXXXXXXX"></ins>
+        <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+    </div>
+
     <script>
-        // MOTOR DE SONIDO (Sintetizador Web Audio)
+        // MOTOR DE AUDIO
         const AudioEngine = {
             ctx: null,
             init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -114,56 +115,66 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.connect(gain); gain.connect(this.ctx.destination);
-
-                if(type === 'bid') { // Sonido corto de puja
-                    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                    osc.start(); osc.stop(this.ctx.currentTime + 0.1);
-                }
-                if(type === 'tick') { // Tick de reloj
-                    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-                    osc.start(); osc.stop(this.ctx.currentTime + 0.05);
-                }
-                if(type === 'win') { // Victoria
-                    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
-                    osc.start(); osc.stop(this.ctx.currentTime + 0.5);
-                }
-                if(type === 'cash') { // Caja registradora
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(1000, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1500, this.ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-                    osc.start(); osc.stop(this.ctx.currentTime + 0.3);
-                }
-                if(type === 'fail') { // Perder
-                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                    osc.start(); osc.stop(this.ctx.currentTime + 0.4);
-                }
+                if(type === 'bid') { osc.frequency.setValueAtTime(600, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1); osc.start(); osc.stop(this.ctx.currentTime + 0.1); }
+                if(type === 'tick') { osc.frequency.setValueAtTime(400, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05); osc.start(); osc.stop(this.ctx.currentTime + 0.05); }
+                if(type === 'win') { osc.frequency.setValueAtTime(800, this.ctx.currentTime + 0.2); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5); osc.start(); osc.stop(this.ctx.currentTime + 0.5); }
+                if(type === 'cash') { osc.type = 'square'; osc.frequency.setValueAtTime(1200, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3); }
+                if(type === 'fail') { osc.frequency.setValueAtTime(150, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4); osc.start(); osc.stop(this.ctx.currentTime + 0.4); }
             }
         };
 
-        // FIREBASE & LOGIC
+        // FIREBASE
         const firebaseConfig = { apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0", authDomain: "grandauctioneer.firebaseapp.com", projectId: "grandauctioneer", storageBucket: "grandauctioneer.firebasestorage.app", messagingSenderId: "779568791424", appId: "1:779568791424:web:c71c5fd48c541755ed0b65" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         const RIVALES = ["Magnate Suizo", "Barón von Art", "Jeque Dubái", "Inversor NY"];
-        let state = { name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", collection: JSON.parse(localStorage.getItem('myCollection')) || [] };
+        let state = { name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", collection: [] };
 
-        function login() { state.name = document.getElementById('player-name').value || "Postor"; AudioEngine.init(); showScreen('screen-menu'); }
-        function updateUI() { document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString(); document.getElementById('col-count').innerText = state.collection.length; }
-        function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); updateUI(); }
+        async function login() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if(!nameInput) return alert("Ingresa tu nombre");
+            
+            state.name = nameInput;
+            AudioEngine.init();
+            
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true; btn.innerText = "CARGANDO BÓVEDA...";
+
+            try {
+                const doc = await db.collection("leaderboard").doc(state.name).get();
+                if(doc.exists) {
+                    const data = doc.data();
+                    state.balance = data.balance || 25000;
+                    state.collection = data.collection || [];
+                } else {
+                    await sync();
+                }
+                showScreen('screen-menu');
+            } catch(e) {
+                alert("Error de conexión. Modo local.");
+                showScreen('screen-menu');
+            } finally {
+                btn.disabled = false; btn.innerText = "INGRESAR AL CLUB";
+            }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            // Gestión de Anuncios
+            const ad = document.getElementById('ad-container');
+            if(id === 'screen-menu' || id === 'screen-collection') ad.style.display = 'flex';
+            else ad.style.display = 'none';
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString();
+            document.getElementById('col-count').innerText = state.collection.length;
+        }
 
         async function startAuction() {
             showScreen('screen-auction');
@@ -171,23 +182,19 @@
             const img = document.getElementById('item-img');
             const loader = document.getElementById('auction-loader');
             clearInterval(state.interval);
-            document.getElementById('ui-timer').innerText = "--";
             img.style.opacity = "0"; loader.style.display = "block";
             title.innerText = "Localizando obra...";
 
             let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`;
             try {
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold');
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting');
                 const d = await r.json();
                 const obj = await (await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${d.objectIDs[Math.floor(Math.random()*100)]}`)).json();
                 if(obj.primaryImageSmall) { finalImg = obj.primaryImageSmall; title.innerText = obj.title; }
             } catch(e) {}
 
-            const tImg = new Image(); tImg.src = finalImg;
-            tImg.onload = () => {
-                img.src = finalImg; img.style.opacity = "1"; loader.style.display = "none";
-                state.currentArtImg = finalImg; iniciarReloj();
-            };
+            img.src = finalImg;
+            img.onload = () => { img.style.opacity = "1"; loader.style.display = "none"; state.currentArtImg = finalImg; iniciarReloj(); };
         }
 
         function iniciarReloj() {
@@ -199,9 +206,7 @@
                 document.getElementById('ui-timer').innerText = state.timer;
                 document.getElementById('ui-bid').innerText = "$" + state.currentBid.toLocaleString();
                 document.getElementById('bid-status').innerText = "LÍDER: " + state.leader;
-                
                 if(state.timer <= 3 && state.timer > 0) AudioEngine.play('tick');
-
                 if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
                     state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
                     AudioEngine.play('bid');
@@ -212,73 +217,44 @@
 
         function makeBid() { if(state.balance >= state.currentBid + 1000){ state.currentBid += 1000; state.leader = state.name; AudioEngine.play('bid'); } }
 
-        function terminar() {
+        async function terminar() {
             if(state.leader === state.name) {
                 AudioEngine.play('win');
-                alert("¡PIEZA GANADA!");
                 state.balance -= state.currentBid;
                 state.collection.push({ img: state.currentArtImg, cost: state.currentBid });
-                localStorage.setItem('myCollection', JSON.stringify(state.collection));
+                alert("¡OBRA ADQUIRIDA!");
             } else {
                 AudioEngine.play('fail');
-                alert("PERDISTE LA SUBASTA");
+                alert("SUBASTA FINALIZADA");
             }
-            sync(); showScreen('screen-menu');
+            await sync();
+            showScreen('screen-menu');
         }
 
         function showCollection() {
-            function showScreen(id) {
-    // 1. Ocultar todas las pantallas
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    // 2. Mostrar la pantalla seleccionada
-    const targetScreen = document.getElementById(id);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-    }
-
-    // 3. LÓGICA DE ADSENSE:
-    // Creamos el contenedor si no existe (por si acaso)
-    let adContainer = document.getElementById('ad-container');
-    if (adContainer) {
-        // Solo mostramos anuncios en el Menú y la Colección
-        // En la subasta se oculta para no distraer ni causar lag
-        if (id === 'screen-menu' || id === 'screen-collection') {
-            adContainer.style.display = 'flex';
-        } else {
-            adContainer.style.display = 'none';
-        }
-    }
-    
-    updateUI();
-}
+            showScreen('screen-collection');
+            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `
+                <div class="art-card" onclick="openSale(${i})"><img src="${art.img}"><div class="price-tag">$${art.cost.toLocaleString()}</div></div>
+            `).join('') || "<p style='grid-column:1/3;text-align:center'>Bóveda vacía</p>";
         }
 
         function openSale(i) {
-            state.sel = i;
-            const offer = Math.floor(state.collection[i].cost * (0.8 + Math.random()));
+            const art = state.collection[i];
+            const offer = Math.floor(art.cost * (0.8 + Math.random()));
             document.getElementById('sale-offer').innerText = "$" + offer.toLocaleString();
-            document.getElementById('confirm-sale-btn').onclick = () => {
+            document.getElementById('confirm-sale-btn').onclick = async () => {
                 AudioEngine.play('cash');
                 state.balance += offer;
                 state.collection.splice(i, 1);
-                localStorage.setItem('myCollection', JSON.stringify(state.collection));
-                closeSalePanel(); sync(); showCollection();
+                closeSalePanel();
+                await sync();
+                showCollection();
             };
             document.getElementById('sale-panel').classList.add('panel-open');
         }
 
         function closeSalePanel() { document.getElementById('sale-panel').classList.remove('panel-open'); }
-        async function sync() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {} }
+        async function sync() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance, collection: state.collection }, { merge: true }); } catch(e) {} }
     </script>
-<div id="ad-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; display: none; justify-content: center; z-index: 1000; padding: 5px 0; border-top: 1px solid #c5a059;">
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:320px;height:50px"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-         data-ad-slot="XXXXXXXXXX"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-</div>
 </body>
 </html>
