@@ -3,46 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold | Ultimate Sound Edition</title>
+    <title>Auction Arena Gold | Global Edition</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
     <style>
         :root { --gold: #c5a059; --bg: #0a0a0a; --green: #44ff44; --red: #ff4444; }
         body { background: var(--bg); color: #fff; font-family: 'Georgia', serif; margin: 0; overflow: hidden; }
+        
         .screen { position: fixed; inset: 0; display: none; flex-direction: column; background: var(--bg); padding: 20px; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .active { display: flex; }
+
         .btn { background: var(--gold); border: none; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; color: #000; text-transform: uppercase; border-radius: 8px; transition: 0.1s; }
         .btn:active { transform: scale(0.95); filter: brightness(1.2); }
-        #img-container { height: 35vh; width: 100%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--gold); position: relative; }
-        #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.5s; }
+
+        /* CONTENEDOR DE IMAGEN OPTIMIZADO */
+        #img-container { height: 35vh; width: 100%; background: #111; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--gold); position: relative; }
+        #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.5s ease-in-out; z-index: 2; }
         .loader { position: absolute; border: 4px solid #333; border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* EFECTOS VISUALES */
         .leader-glow { border: 2px solid var(--green) !important; box-shadow: 0 0 15px var(--green); }
         .win-flash { animation: flash 0.5s 3; }
         @keyframes flash { 50% { background: var(--green); } }
-        .rank-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
-        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; }
-        .grid-gallery div { aspect-ratio: 1; border: 1px solid #333; overflow: hidden; }
+
+        .history-box { height: 65px; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 8px; border-left: 2px solid var(--gold); margin-bottom: 10px; overflow: hidden; }
+        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
+        .grid-gallery div { aspect-ratio: 1; border: 1px solid #333; overflow: hidden; background: #111; }
         .grid-gallery img { width: 100%; height: 100%; object-fit: cover; }
-        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #111; padding: 20px; border-top: 3px solid var(--gold); transition: 0.3s; z-index: 20; box-sizing: border-box; }
+
+        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #111; padding: 20px; border-top: 3px solid var(--gold); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 20; box-sizing: border-box; }
         .panel-open { bottom: 0 !important; }
     </style>
 </head>
 <body>
 
-    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center;">
-        <h1 style="color:var(--gold); letter-spacing: 5px;">AUCTION ARENA</h1>
-        <input type="text" id="player-name" placeholder="Tu Nombre" style="padding:12px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white;">
+    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center; text-align:center;">
+        <h1 style="color:var(--gold); letter-spacing: 5px; text-shadow: 0 0 15px rgba(197,160,89,0.5);">AUCTION ARENA</h1>
+        <p style="color:#888; font-size: 0.8rem; margin-bottom: 20px;">EDICIÓN COLECCIONISTA 2026</p>
+        <input type="text" id="player-name" placeholder="Tu Nombre de Postor" style="padding:15px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white; border-radius: 5px; outline: none;">
         <button class="btn" onclick="login()">ENTRAR AL CLUB</button>
     </div>
 
     <div id="screen-menu" class="screen" style="align-items:center;">
-        <h1 style="color:var(--gold)">ESTUDIO PRIVADO</h1>
-        <p>Saldo: <span id="ui-bal" style="color:var(--gold); font-size: 1.5rem;">$25,000</span></p>
-        <button class="btn" onclick="startAuction()">NUEVA SUBASTA</button>
-        <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">COLECCIÓN (<span id="col-count">0</span>)</button>
-        <button class="btn" style="background:#000; color:#555; font-size:0.7rem;" onclick="showLeaderboard()">RANKING MUNDIAL</button>
+        <h2 style="color:var(--gold); margin-top: 40px;">ESTUDIO PRIVADO</h2>
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: center; width: 80%; margin: 20px 0;">
+            <small style="color:var(--gold)">SALDO DISPONIBLE</small>
+            <div id="ui-bal" style="font-size: 2rem; font-weight: bold;">$25,000</div>
+        </div>
+        <button class="btn" onclick="startAuction()">BUSCAR LOTE EN EL MET</button>
+        <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">MI COLECCIÓN (<span id="col-count">0</span>)</button>
+        <button class="btn" style="background:transparent; color:#555; border: 1px solid #333;" onclick="showLeaderboard()">RANKING MUNDIAL</button>
     </div>
 
     <div id="screen-auction" class="screen" style="padding:0;">
@@ -50,76 +64,57 @@
             <div class="loader" id="auction-loader"></div>
             <img id="item-img" src="">
         </div>
-        <div style="padding: 20px;">
-            <h2 id="item-title" style="margin:0; font-size: 1rem; height: 2.5em; overflow: hidden;">---</h2>
-            <div id="bid-status" style="margin: 10px 0; padding: 8px; text-align: center; border: 1px solid #333; font-weight: bold;">
-                <span id="bid-leader-name">ESPERANDO...</span>
+        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+            <h2 id="item-title" style="margin:0; font-size: 1.1rem; height: 2.4em; overflow: hidden; color: var(--gold);">Cargando...</h2>
+            <div id="bid-status" style="margin: 10px 0; padding: 10px; text-align: center; border: 1px solid #333; font-weight: bold; border-radius: 5px;">
+                <span id="bid-leader-name">---</span>
             </div>
-            <div id="history-lines" style="height: 60px; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 5px; border-left: 2px solid var(--gold); margin-bottom: 10px;"></div>
-            <div style="display: flex; justify-content: space-between;">
-                <div><small>OFERTA</small><br><b style="font-size: 1.5rem;">$<span id="ui-bid">0</span></b></div>
+            <div id="history-lines" class="history-box"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                <div><small style="color:#888">OFERTA ACTUAL</small><div style="font-size: 1.8rem; font-weight: bold;">$<span id="ui-bid">0</span></div></div>
                 <div id="ui-timer" style="font-size: 2.5rem; color:var(--red); font-weight: bold;">12</div>
             </div>
-            <button class="btn" onclick="makeBid()">PUJAR +$1,000</button>
+            <button class="btn" onclick="makeBid()" style="margin-top: 15px;">PUJAR +$1,000</button>
         </div>
     </div>
 
     <div id="screen-collection" class="screen">
-        <h2 style="color:var(--gold); text-align:center;">MIS TROFEOS</h2>
+        <h2 style="color:var(--gold); text-align:center;">MIS ACTIVOS</h2>
         <div id="gallery-content" class="grid-gallery"></div>
-        <button class="btn" onclick="showScreen('screen-menu')">VOLVER</button>
+        <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL MENÚ</button>
     </div>
 
     <div id="screen-rank" class="screen">
-        <h2 style="color:var(--gold); text-align:center;">TOP 10</h2>
+        <h2 style="color:var(--gold); text-align:center;">TOP 10 MUNDIAL</h2>
         <div id="rank-content" style="flex-grow:1;"></div>
         <button class="btn" onclick="showScreen('screen-menu')">VOLVER</button>
     </div>
 
     <div id="sale-panel">
-        <h3 style="margin:0; color:var(--gold)">OFERTA DE VENTA</h3>
-        <p id="sale-info">---</p>
+        <h3 style="margin:0; color:var(--gold)">VALUACIÓN DE EXPERTO</h3>
+        <p id="sale-info" style="font-size:0.9rem; color:#ccc;">---</p>
         <div style="display:flex; gap:10px;">
-            <button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER</button>
+            <button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER AHORA</button>
             <button class="btn" onclick="closeSalePanel()" style="background:#333; color:#fff">CONSERVAR</button>
         </div>
     </div>
 
     <script>
-        // SONIDOS (Generados por AudioContext para no depender de archivos externos)
+        // 1. SONIDOS DINÁMICOS (Web Audio API)
         const sfx = {
             play(type) {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain); gain.connect(ctx.destination);
-                
-                if(type === 'bid') { // Sonido click corto
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                    osc.start(); osc.stop(ctx.currentTime + 0.1);
-                }
-                if(type === 'win') { // Martillazo / Gavel
-                    osc.type = 'square'; osc.frequency.setValueAtTime(150, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
-                }
-                if(type === 'cash') { // Caja registradora
-                    osc.type = 'triangle'; osc.frequency.setValueAtTime(1200, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.1);
-                    osc.start(); osc.stop(ctx.currentTime + 0.2);
-                }
-                if(type === 'tick') { // Alarma tiempo
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.05);
-                }
+                if(type==='bid'){ osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); osc.start(); osc.stop(ctx.currentTime + 0.1); }
+                if(type==='win'){ osc.type='square'; osc.frequency.setValueAtTime(150, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4); osc.start(); osc.stop(ctx.currentTime + 0.4); }
+                if(type==='cash'){ osc.frequency.setValueAtTime(1000, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1500, ctx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.2); }
+                if(type==='tick'){ osc.frequency.setValueAtTime(400, ctx.currentTime); gain.gain.setValueAtTime(0.05, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.05); }
             }
         };
 
+        // 2. CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -131,7 +126,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Coleccionista de Dubái"];
+        // 3. ESTADO DEL JUEGO
+        const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Jeque de Dubái"];
         let state = { 
             name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", history: [],
             collection: JSON.parse(localStorage.getItem('myCollection')) || [],
@@ -144,7 +140,7 @@
         }
 
         function updateUI() {
-            document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
+            document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString();
             document.getElementById('col-count').innerText = state.collection.length;
         }
 
@@ -154,29 +150,33 @@
             updateUI();
         }
 
+        // 4. LÓGICA DE SUBASTA (CORREGIDA)
         async function startAuction() {
             showScreen('screen-auction');
-            document.getElementById('item-title').innerText = "Catálogo del Museo...";
+            const title = document.getElementById('item-title');
             const img = document.getElementById('item-img');
+            const loader = document.getElementById('auction-loader');
+            
+            title.innerText = "Consultando archivos del MET Museum...";
             img.style.opacity = "0";
-            document.getElementById('auction-loader').style.display = "block";
+            loader.style.display = "block";
             state.history = [];
             
             try {
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=statue|painting|gold');
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|statue|painting');
                 const d = await r.json();
                 const objId = d.objectIDs[Math.floor(Math.random() * 200)];
                 const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
                 const od = await or.json();
                 state.currentObjImg = od.primaryImageSmall || "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
-                document.getElementById('item-title').innerText = od.title;
+                title.innerText = od.title || "Obra de Arte";
             } catch(e) {
                 state.currentObjImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
-                document.getElementById('item-title').innerText = "Obra Maestra";
+                title.innerText = "Reliquia del Museo";
             }
 
             img.src = state.currentObjImg;
-            img.onload = () => { img.style.opacity = "1"; document.getElementById('auction-loader').style.display = "none"; };
+            img.onload = () => { img.style.opacity = "1"; loader.style.display = "none"; };
 
             state.currentBid = Math.floor(Math.random() * 5000) + 4000;
             state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
@@ -191,13 +191,14 @@
                 state.timer--;
                 document.getElementById('ui-timer').innerText = state.timer;
                 document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
-                
-                if(state.timer <= 3 && state.timer > 0) sfx.play('tick'); // Tic tac final
+                if(state.timer <= 3 && state.timer > 0) sfx.play('tick');
 
                 const lb = document.getElementById('bid-status');
                 document.getElementById('bid-leader-name').innerText = "LÍDER: " + state.leader;
-                if(state.leader === state.name) { lb.classList.add('leader-glow'); } else { lb.classList.remove('leader-glow'); }
+                if(state.leader === state.name) { lb.classList.add('leader-glow'); document.getElementById('bid-leader-name').style.color="var(--green)"; } 
+                else { lb.classList.remove('leader-glow'); document.getElementById('bid-leader-name').style.color="var(--red)"; }
 
+                // IA de contraoferta
                 if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
                     state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
                     state.timer = 8; addHistory(state.leader, state.currentBid);
@@ -207,14 +208,14 @@
         }
 
         function makeBid() {
-            if(state.balance < state.currentBid + 1000) return;
+            if(state.balance < state.currentBid + 1000) return alert("Fondos insuficientes");
             sfx.play('bid');
             state.currentBid += 1000; state.leader = state.name; state.timer = 8;
             addHistory(state.name, state.currentBid);
         }
 
-        function addHistory(user, amount) {
-            const line = `<div style="color:${user === state.name ? 'var(--green)':'#ccc'}">${user}: $${amount.toLocaleString()}</div>`;
+        function addHistory(user, amt) {
+            const line = `<div style="color:${user === state.name ? 'var(--green)':'#ccc'}">${user}: $${amt.toLocaleString()}</div>`;
             state.history.unshift(line);
             if(state.history.length > 3) state.history.pop();
             document.getElementById('history-lines').innerHTML = state.history.join('');
@@ -225,25 +226,24 @@
             if(state.leader === state.name) {
                 document.body.classList.add('win-flash');
                 setTimeout(() => document.body.classList.remove('win-flash'), 1500);
-                alert("¡PIEZA ADQUIRIDA!");
+                alert("¡LOTE ADQUIRIDO!");
                 state.balance -= state.currentBid;
                 state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
                 localStorage.setItem('myCollection', JSON.stringify(state.collection));
-            } else {
-                alert("SUBASTA CERRADA");
-            }
+            } else { alert("EL LOTE SE HA VENDIDO A " + state.leader); }
             syncFirebase(); showScreen('screen-menu');
         }
 
+        // 5. COLECCIÓN Y MERCADO
         function showCollection() {
             showScreen('screen-collection');
-            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `<div onclick="openSalePanel(${i})"><img src="${art.img}"></div>`).join('') || "Galería vacía.";
+            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `<div onclick="openSalePanel(${i})"><img src="${art.img}"></div>`).join('') || "<p style='grid-column:1/4; text-align:center;'>Galería vacía.</p>";
         }
 
         function openSalePanel(i) {
             state.selectedArtIndex = i;
-            const offer = Math.floor(state.collection[i].cost * (0.6 + Math.random() * 1.3));
-            document.getElementById('sale-info').innerHTML = `Oferta de compra: <b style="color:var(--green)">$${offer.toLocaleString()}</b>`;
+            const offer = Math.floor(state.collection[i].cost * (0.6 + Math.random() * 1.5));
+            document.getElementById('sale-info').innerHTML = `Pagaste: $${state.collection[i].cost.toLocaleString()}<br>Oferta de reventa: <b style="color:var(--green)">$${offer.toLocaleString()}</b>`;
             document.getElementById('confirm-sale-btn').onclick = () => {
                 sfx.play('cash');
                 state.balance += offer;
@@ -258,19 +258,21 @@
 
         async function syncFirebase() {
             updateUI();
-            await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true });
+            try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {}
         }
 
         async function showLeaderboard() {
             showScreen('screen-rank');
-            document.getElementById('rank-content').innerHTML = "Cargando...";
-            const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
-            let html = "";
-            snap.forEach(doc => {
-                const p = doc.data();
-                html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`;
-            });
-            document.getElementById('rank-content').innerHTML = html;
+            document.getElementById('rank-content').innerHTML = "Sincronizando con la red...";
+            try {
+                const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
+                let html = "";
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`;
+                });
+                document.getElementById('rank-content').innerHTML = html;
+            } catch(e) { document.getElementById('rank-content').innerHTML = "Error de conexión."; }
         }
     </script>
 </body>
