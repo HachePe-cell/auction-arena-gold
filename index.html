@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold | Luxury Edition</title>
+    <title>Auction Arena | Private Vault</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
@@ -15,219 +15,143 @@
             --card-bg: rgba(255, 255, 255, 0.05);
             --gold: #c5a059;
             --green: #44ff44;
+            --red: #ff4444;
         }
 
         body { 
             background: var(--dark-bg); 
             color: #fff; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             margin: 0; 
             overflow: hidden;
             background-image: radial-gradient(circle at top right, #1a1a1a, #050505);
         }
         
-        /* Animaciones */
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes shine { from { left: -100%; } to { left: 100%; } }
-
         .screen { 
             position: fixed; inset: 0; display: none; flex-direction: column; 
             padding: 25px; box-sizing: border-box;
-            animation: slideUp 0.5s ease-out;
+            animation: fadeIn 0.5s ease-out;
         }
         .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        /* Estilo del Menú Principal */
-        .header-title {
-            text-align: center;
-            margin-top: 50px;
+        /* HEADER & TYPO */
+        .header-title { text-align: center; margin-bottom: 20px; }
+        .header-title h1 { 
+            font-family: 'Georgia', serif; font-size: 2rem; letter-spacing: 3px; 
+            background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-transform: uppercase; margin: 0;
         }
 
-        .header-title h1 {
-            font-family: 'Georgia', serif;
-            font-size: 2.5rem;
-            letter-spacing: 4px;
-            margin-bottom: 5px;
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-        }
-
-        .header-title p {
-            color: #666;
-            font-size: 0.7rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        /* Tarjeta de Saldo Pro */
-        .balance-card {
+        /* CARDS */
+        .glass-card {
             background: var(--card-bg);
             border: 1px solid rgba(197, 160, 89, 0.2);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            margin: 40px 0;
+            padding: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
-        .balance-card small {
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-
-        .balance-card div {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-top: 10px;
-            text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
-        }
-
-        /* Botones Pro */
+        /* BUTTONS */
         .btn-main {
-            background: var(--gold-gradient);
-            color: #000;
-            border: none;
-            padding: 18px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: 0.3s;
-            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2);
-            margin-bottom: 15px;
+            background: var(--gold-gradient); color: #000; border: none; padding: 18px;
+            border-radius: 12px; font-weight: 800; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2);
         }
-
-        .btn-main::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shine 3s infinite;
-        }
+        .btn-main:active { transform: scale(0.96); }
 
         .btn-secondary {
-            background: rgba(255,255,255,0.03);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
+            background: rgba(255,255,255,0.03); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px; border-radius: 10px; cursor: pointer;
+        }
+
+        /* GALERÍA DE LUJO */
+        .museum-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+            overflow-y: auto; padding: 10px 5px; margin-bottom: 80px;
+        }
+        .art-card {
+            background: #111; border-radius: 12px; overflow: hidden;
+            border: 1px solid #222; position: relative;
             transition: 0.3s;
         }
-
-        .btn-secondary:hover { background: rgba(255,255,255,0.08); }
-
-        /* Stats rápidas */
-        .quick-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
+        .art-card:active { transform: scale(0.95); }
+        .art-card img { width: 100%; aspect-ratio: 1; object-fit: cover; filter: sepia(0.3); }
+        .art-card .price-tag {
+            position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8);
+            color: var(--gold); font-size: 0.7rem; text-align: center; padding: 5px 0;
         }
 
-        .stat-item {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
+        /* PANEL DE VENTA DESLIZANTE */
+        #sale-panel {
+            position: fixed; bottom: -100%; left: 0; width: 100%;
+            background: #0a0a0a; border-top: 3px solid var(--gold);
+            padding: 30px 25px; box-sizing: border-box; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100; border-radius: 30px 30px 0 0;
         }
+        .panel-open { bottom: 0 !important; }
 
-        .stat-item small { display: block; color: #666; font-size: 0.6rem; margin-bottom: 5px; text-transform: uppercase; }
-        .stat-item b { color: var(--gold); font-size: 1.1rem; }
-
-        /* Elementos de Subasta (Mantenidos) */
-        #img-container { height: 35vh; background: #000; border-radius: 15px; overflow: hidden; position: relative; border: 1px solid #222; }
+        /* AUCTION ASSETS */
+        #img-container { height: 30vh; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #333; }
         #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.4s; }
-        .loader { position: absolute; border: 3px solid #111; border-top: 3px solid var(--gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; top: 45%; left: 45%; }
+        .loader { position: absolute; border: 3px solid #111; border-top: 3px solid var(--gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
-        .grid-gallery div { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #222; }
-        .grid-gallery img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
 
-    <div id="screen-login" class="screen active" style="justify-content: center; align-items: center;">
-        <div class="header-title">
-            <h1>Auction Arena</h1>
-            <p>Privé Collector Club</p>
-        </div>
-        <input type="text" id="player-name" placeholder="Postor ID" style="margin-top:40px; background:rgba(255,255,255,0.05); border:1px solid #333; padding:18px; width:80%; border-radius:12px; color:#fff; text-align:center;">
-        <button class="btn-main" onclick="login()" style="width:80%; margin-top:20px;">VERIFICAR IDENTIDAD</button>
+    <div id="screen-login" class="screen active" style="justify-content: center;">
+        <div class="header-title"><h1>AUCTION ARENA</h1><p>PRIVÉ COLLECTOR CLUB</p></div>
+        <input type="text" id="player-name" placeholder="ID DE MIEMBRO" style="background:rgba(255,255,255,0.05); border:1px solid #333; padding:18px; border-radius:12px; color:#fff; text-align:center; margin-bottom: 20px;">
+        <button class="btn-main" onclick="login()">ENTRAR A LA BÓVEDA</button>
     </div>
 
     <div id="screen-menu" class="screen">
-        <div class="header-title" style="margin-top:20px;">
-            <h1>Elite Member</h1>
-            <p>Global Auction Access</p>
+        <div class="header-title"><h1>ESTUDIO PRIVADO</h1></div>
+        <div class="glass-card" style="text-align: center; margin-bottom: 20px;">
+            <small style="color:var(--gold); letter-spacing: 2px;">SALDO LIQUIDO</small>
+            <div id="ui-bal" style="font-size: 2.5rem; font-weight: 800; margin-top: 10px;">$25,000</div>
         </div>
-
-        <div class="balance-card">
-            <small>Capital Líquido</small>
-            <div id="ui-bal">$25,000</div>
-        </div>
-
-        <button class="btn-main" onclick="startAuction()">ENTRAR A LA SUBASTA</button>
-        
-        <div class="quick-stats">
-            <div class="stat-item" onclick="showCollection()">
-                <small>Colección</small>
-                <b id="col-count">0</b>
-            </div>
-            <div class="stat-item" onclick="showLeaderboard()">
-                <small>Prestigio</small>
-                <b>TOP 10</b>
-            </div>
-        </div>
-
-        <p style="text-align:center; color:#333; font-size:0.6rem; margin-top:auto;">ESTE CLUB SE RESERVA EL DERECHO DE ADMISIÓN</p>
+        <button class="btn-main" onclick="startAuction()" style="margin-bottom: 15px;">BUSCAR NUEVA PIEZA</button>
+        <button class="btn-secondary" onclick="showCollection()" style="padding: 18px;">MI COLECCIÓN (<span id="col-count">0</span>)</button>
+        <button class="btn-secondary" onclick="showLeaderboard()" style="margin-top: 10px; border: none; color: #555;">RANKING MUNDIAL</button>
     </div>
 
     <div id="screen-auction" class="screen">
-        <div id="img-container">
-            <div class="loader" id="auction-loader"></div>
-            <img id="item-img" src="">
-        </div>
-        <h2 id="item-title" style="font-size:1.1rem; color:var(--gold); margin: 20px 0 10px;">Cargando...</h2>
-        <div id="bid-status" style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; text-align:center; margin-bottom:15px; border:1px solid #222;">
-            <span id="bid-leader-name" style="font-weight:bold; letter-spacing:1px;">SIN OFERTAS</span>
+        <div id="img-container"><div class="loader" id="auction-loader"></div><img id="item-img" src=""></div>
+        <h2 id="item-title" style="font-size: 1rem; color: var(--gold); margin: 15px 0;">Cargando...</h2>
+        <div id="bid-status" style="background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; text-align:center; border:1px solid #222; margin-bottom: 10px;">
+            <span id="bid-leader-name" style="font-size: 0.8rem; font-weight: bold;">SIN POSTOR</span>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small style="color:#666">OFERTA</small><br><span id="ui-bid" style="font-size:1.8rem; font-weight:800;">$0</span></div>
+            <div><small style="color:#666">OFERTA ACTUAL</small><div id="ui-bid" style="font-size:1.8rem; font-weight:800;">$0</div></div>
             <div id="ui-timer" style="font-size:2.5rem; font-weight:900; color:var(--red);">--</div>
         </div>
-        <button class="btn-main" onclick="makeBid()" style="margin-top:20px;">HACER OFERTA (+1k)</button>
-        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="margin-top:10px;">RETIRARSE</button>
+        <button class="btn-main" onclick="makeBid()" style="margin-top: 20px;">SUBIR PUJA +$1,000</button>
     </div>
 
     <div id="screen-collection" class="screen">
-        <h2 style="color:var(--gold); letter-spacing:2px;">MI BÓVEDA</h2>
-        <div id="gallery-content" class="grid-gallery"></div>
-        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="margin-top:auto;">REGRESAR</button>
+        <div class="header-title"><h1>MI BÓVEDA</h1><p>Toca una pieza para negociar</p></div>
+        <div id="gallery-content" class="museum-grid"></div>
+        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="position: fixed; bottom: 20px; left: 25px; right: 25px;">VOLVER AL ESTUDIO</button>
     </div>
 
-    <div id="screen-rank" class="screen">
-        <h2 style="color:var(--gold); letter-spacing:2px; text-align:center;">LÍDERES GLOBALES</h2>
-        <div id="rank-content" style="margin:20px 0; flex-grow:1;"></div>
-        <button class="btn-secondary" onclick="showScreen('screen-menu')">VOLVER</button>
+    <div id="sale-panel">
+        <div style="text-align: center;">
+            <div style="width: 40px; height: 4px; background: #333; border-radius: 2px; margin: 0 auto 20px;"></div>
+            <h2 style="color:var(--gold); margin: 0;">VALUACIÓN</h2>
+            <p style="color: #888; font-size: 0.8rem;">Un coleccionista privado ofrece:</p>
+            <div id="sale-offer" style="font-size: 2.2rem; font-weight: 800; margin: 20px 0; color: var(--green);">$0</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button class="btn-main" id="confirm-sale-btn">VENDER</button>
+                <button class="btn-secondary" onclick="closeSalePanel()">CONSERVAR</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // CONFIG FIREBASE (Tus datos)
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -240,11 +164,22 @@
         const db = firebase.firestore();
 
         const RIVALES = ["Magnate Suizo", "Barón von Art", "Jeque de Dubái", "Inversor NY"];
-        let state = { name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", collection: JSON.parse(localStorage.getItem('myCollection')) || [] };
+        let state = { 
+            name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", 
+            collection: JSON.parse(localStorage.getItem('myCollection')) || [],
+            currentArtImg: "", selectedArtIndex: null
+        };
 
         function login() { state.name = document.getElementById('player-name').value || "Postor"; showScreen('screen-menu'); }
-        function updateUI() { document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString(); document.getElementById('col-count').innerText = state.collection.length; }
-        function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); updateUI(); }
+        function updateUI() { 
+            document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString(); 
+            document.getElementById('col-count').innerText = state.collection.length;
+        }
+        function showScreen(id) { 
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            updateUI(); 
+        }
 
         async function startAuction() {
             showScreen('screen-auction');
@@ -254,38 +189,34 @@
             
             clearInterval(state.interval);
             document.getElementById('ui-timer').innerText = "--";
-            img.style.opacity = "0";
-            loader.style.display = "block";
+            img.style.opacity = "0"; loader.style.display = "block";
             title.innerText = "Consultando catálogo...";
 
             let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`;
-            let finalTitle = "Obra Contemporánea";
+            let finalTitle = "Obra Maestra";
 
             try {
                 const controller = new AbortController();
                 setTimeout(() => controller.abort(), 2000);
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold', { signal: controller.signal });
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|painting', { signal: controller.signal });
                 const d = await r.json();
-                const objId = d.objectIDs[Math.floor(Math.random() * 100)];
+                const objId = d.objectIDs[Math.floor(Math.random() * 150)];
                 const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`, { signal: controller.signal });
                 const od = await or.json();
                 if(od.primaryImageSmall) { finalImg = od.primaryImageSmall; finalTitle = od.title; }
-            } catch(e) {}
+            } catch(e) { console.log("Carga rápida activada"); }
 
             const tempImg = new Image();
             tempImg.src = finalImg;
             tempImg.onload = () => {
-                img.src = finalImg;
-                img.style.opacity = "1";
-                loader.style.display = "none";
-                title.innerText = finalTitle;
-                state.currentObjImg = finalImg;
-                iniciarSubasta();
+                img.src = finalImg; img.style.opacity = "1"; loader.style.display = "none";
+                title.innerText = finalTitle; state.currentArtImg = finalImg;
+                ejecutarSubasta();
             };
         }
 
-        function iniciarSubasta() {
-            state.currentBid = Math.floor(Math.random() * 5000) + 4000;
+        function ejecutarSubasta() {
+            state.currentBid = Math.floor(Math.random() * 5000) + 5000;
             state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
             state.timer = 12;
             state.interval = setInterval(() => {
@@ -300,25 +231,57 @@
             }, 1000);
         }
 
-        function makeBid() { if(state.balance >= state.currentBid+1000){ state.currentBid += 1000; state.leader = state.name; } }
+        function makeBid() { if(state.balance >= state.currentBid + 1000){ state.currentBid += 1000; state.leader = state.name; } }
 
         async function terminarSubasta() {
             if(state.leader === state.name) {
-                alert("PIEZA ADQUIRIDA");
+                alert("PIEZA GANADA");
                 state.balance -= state.currentBid;
-                state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
+                state.collection.push({ img: state.currentArtImg, cost: state.currentBid });
                 localStorage.setItem('myCollection', JSON.stringify(state.collection));
             }
             syncFirebase(); showScreen('screen-menu');
         }
 
+        // --- SISTEMA DE COLECCIÓN Y VENTAS ---
         function showCollection() {
             showScreen('screen-collection');
-            document.getElementById('gallery-content').innerHTML = state.collection.map((art) => `<div><img src="${art.img}"></div>`).join('');
+            const gallery = document.getElementById('gallery-content');
+            gallery.innerHTML = state.collection.map((art, i) => `
+                <div class="art-card" onclick="openSalePanel(${i})">
+                    <img src="${art.img}">
+                    <div class="price-tag">$${art.cost.toLocaleString()}</div>
+                </div>
+            `).join('') || "<p style='grid-column: 1/3; text-align:center; color:#444;'>Bóveda vacía</p>";
         }
 
-        async function syncFirebase() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {} }
-        
+        function openSalePanel(index) {
+            state.selectedArtIndex = index;
+            // Oferta aleatoria entre el 70% y el 180% del valor de compra
+            const art = state.collection[index];
+            const offer = Math.floor(art.cost * (0.7 + Math.random() * 1.1));
+            
+            document.getElementById('sale-offer').innerText = "$" + offer.toLocaleString();
+            document.getElementById('confirm-sale-btn').onclick = () => confirmSale(offer);
+            document.getElementById('sale-panel').classList.add('panel-open');
+        }
+
+        function confirmSale(amount) {
+            state.balance += amount;
+            state.collection.splice(state.selectedArtIndex, 1);
+            localStorage.setItem('myCollection', JSON.stringify(state.collection));
+            closeSalePanel();
+            syncFirebase();
+            showCollection();
+        }
+
+        function closeSalePanel() { document.getElementById('sale-panel').classList.remove('panel-open'); }
+
+        async function syncFirebase() { 
+            updateUI(); 
+            try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {} 
+        }
+
         async function showLeaderboard() {
             showScreen('screen-rank');
             const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
