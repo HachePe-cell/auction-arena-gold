@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold | Global Edition</title>
+    <title>Auction Arena Gold | Pro Sincronizado</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
@@ -19,13 +19,11 @@
         .btn { background: var(--gold); border: none; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; color: #000; text-transform: uppercase; border-radius: 8px; transition: 0.1s; }
         .btn:active { transform: scale(0.95); filter: brightness(1.2); }
 
-        /* CONTENEDOR DE IMAGEN OPTIMIZADO */
         #img-container { height: 35vh; width: 100%; background: #111; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--gold); position: relative; }
         #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.5s ease-in-out; z-index: 2; }
         .loader { position: absolute; border: 4px solid #333; border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* EFECTOS VISUALES */
         .leader-glow { border: 2px solid var(--green) !important; box-shadow: 0 0 15px var(--green); }
         .win-flash { animation: flash 0.5s 3; }
         @keyframes flash { 50% { background: var(--green); } }
@@ -41,10 +39,9 @@
 </head>
 <body>
 
-    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center; text-align:center;">
+    <div id="screen-login" class="screen active" style="align-items:center; justify-content:center;">
         <h1 style="color:var(--gold); letter-spacing: 5px; text-shadow: 0 0 15px rgba(197,160,89,0.5);">AUCTION ARENA</h1>
-        <p style="color:#888; font-size: 0.8rem; margin-bottom: 20px;">EDICIÓN COLECCIONISTA 2026</p>
-        <input type="text" id="player-name" placeholder="Tu Nombre de Postor" style="padding:15px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white; border-radius: 5px; outline: none;">
+        <input type="text" id="player-name" placeholder="Tu Nombre de Postor" style="padding:15px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white; border-radius: 5px;">
         <button class="btn" onclick="login()">ENTRAR AL CLUB</button>
     </div>
 
@@ -54,8 +51,8 @@
             <small style="color:var(--gold)">SALDO DISPONIBLE</small>
             <div id="ui-bal" style="font-size: 2rem; font-weight: bold;">$25,000</div>
         </div>
-        <button class="btn" onclick="startAuction()">BUSCAR LOTE EN EL MET</button>
-        <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">MI COLECCIÓN (<span id="col-count">0</span>)</button>
+        <button class="btn" onclick="startAuction()">IR A LA SUBASTA</button>
+        <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">COLECCIÓN (<span id="col-count">0</span>)</button>
         <button class="btn" style="background:transparent; color:#555; border: 1px solid #333;" onclick="showLeaderboard()">RANKING MUNDIAL</button>
     </div>
 
@@ -65,56 +62,40 @@
             <img id="item-img" src="">
         </div>
         <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
-            <h2 id="item-title" style="margin:0; font-size: 1.1rem; height: 2.4em; overflow: hidden; color: var(--gold);">Cargando...</h2>
+            <h2 id="item-title" style="margin:0; font-size: 1.1rem; height: 2.4em; overflow: hidden; color: var(--gold);">Sincronizando...</h2>
             <div id="bid-status" style="margin: 10px 0; padding: 10px; text-align: center; border: 1px solid #333; font-weight: bold; border-radius: 5px;">
-                <span id="bid-leader-name">---</span>
+                <span id="bid-leader-name">ESPERANDO OBRA...</span>
             </div>
             <div id="history-lines" class="history-box"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                <div><small style="color:#888">OFERTA ACTUAL</small><div style="font-size: 1.8rem; font-weight: bold;">$<span id="ui-bid">0</span></div></div>
-                <div id="ui-timer" style="font-size: 2.5rem; color:var(--red); font-weight: bold;">12</div>
+                <div><small style="color:#888">OFERTA</small><div style="font-size: 1.8rem; font-weight: bold;">$<span id="ui-bid">0</span></div></div>
+                <div id="ui-timer" style="font-size: 2.5rem; color:var(--red); font-weight: bold;">--</div>
             </div>
             <button class="btn" onclick="makeBid()" style="margin-top: 15px;">PUJAR +$1,000</button>
         </div>
     </div>
 
-    <div id="screen-collection" class="screen">
-        <h2 style="color:var(--gold); text-align:center;">MIS ACTIVOS</h2>
-        <div id="gallery-content" class="grid-gallery"></div>
-        <button class="btn" onclick="showScreen('screen-menu')">VOLVER AL MENÚ</button>
-    </div>
-
-    <div id="screen-rank" class="screen">
-        <h2 style="color:var(--gold); text-align:center;">TOP 10 MUNDIAL</h2>
-        <div id="rank-content" style="flex-grow:1;"></div>
-        <button class="btn" onclick="showScreen('screen-menu')">VOLVER</button>
-    </div>
-
-    <div id="sale-panel">
-        <h3 style="margin:0; color:var(--gold)">VALUACIÓN DE EXPERTO</h3>
-        <p id="sale-info" style="font-size:0.9rem; color:#ccc;">---</p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER AHORA</button>
-            <button class="btn" onclick="closeSalePanel()" style="background:#333; color:#fff">CONSERVAR</button>
-        </div>
-    </div>
+    <div id="screen-collection" class="screen"><h2 style="color:var(--gold); text-align:center;">MIS ACTIVOS</h2><div id="gallery-content" class="grid-gallery"></div><button class="btn" onclick="showScreen('screen-menu')">VOLVER</button></div>
+    <div id="screen-rank" class="screen"><h2 style="color:var(--gold); text-align:center;">TOP 10</h2><div id="rank-content" style="flex-grow:1;"></div><button class="btn" onclick="showScreen('screen-menu')">VOLVER</button></div>
+    <div id="sale-panel"><h3 style="margin:0; color:var(--gold)">VALUACIÓN</h3><p id="sale-info">---</p><div style="display:flex; gap:10px;"><button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER</button><button class="btn" onclick="closeSalePanel()" style="background:#333; color:#fff">CONSERVAR</button></div></div>
 
     <script>
-        // 1. SONIDOS DINÁMICOS (Web Audio API)
+        // SONIDOS
         const sfx = {
             play(type) {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                if(type==='bid'){ osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); osc.start(); osc.stop(ctx.currentTime + 0.1); }
-                if(type==='win'){ osc.type='square'; osc.frequency.setValueAtTime(150, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4); osc.start(); osc.stop(ctx.currentTime + 0.4); }
-                if(type==='cash'){ osc.frequency.setValueAtTime(1000, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1500, ctx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.2); }
-                if(type==='tick'){ osc.frequency.setValueAtTime(400, ctx.currentTime); gain.gain.setValueAtTime(0.05, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.05); }
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    if(type==='bid'){ osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); osc.start(); osc.stop(ctx.currentTime + 0.1); }
+                    if(type==='win'){ osc.type='square'; osc.frequency.setValueAtTime(150, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4); osc.start(); osc.stop(ctx.currentTime + 0.4); }
+                    if(type==='cash'){ osc.frequency.setValueAtTime(1200, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.2); }
+                    if(type==='tick'){ osc.frequency.setValueAtTime(400, ctx.currentTime); gain.gain.setValueAtTime(0.05, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.05); }
+                } catch(e) {}
             }
         };
 
-        // 2. CONFIGURACIÓN FIREBASE
+        // FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -126,7 +107,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 3. ESTADO DEL JUEGO
         const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Jeque de Dubái"];
         let state = { 
             name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", history: [],
@@ -134,49 +114,56 @@
             currentObjImg: "", selectedArtIndex: null
         };
 
-        function login() {
-            state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999);
-            updateUI(); showScreen('screen-menu');
-        }
+        function login() { state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999); updateUI(); showScreen('screen-menu'); }
+        function updateUI() { document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString(); document.getElementById('col-count').innerText = state.collection.length; }
+        function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); updateUI(); }
 
-        function updateUI() {
-            document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString();
-            document.getElementById('col-count').innerText = state.collection.length;
-        }
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            updateUI();
-        }
-
-        // 4. LÓGICA DE SUBASTA (CORREGIDA)
+        // --- LÓGICA DE SUBASTA SINCRONIZADA ---
         async function startAuction() {
             showScreen('screen-auction');
             const title = document.getElementById('item-title');
             const img = document.getElementById('item-img');
             const loader = document.getElementById('auction-loader');
+            const timerUI = document.getElementById('ui-timer');
             
-            title.innerText = "Consultando archivos del MET Museum...";
+            clearInterval(state.interval);
+            timerUI.innerText = "--";
+            title.innerText = "Conectando con el MET Museum...";
             img.style.opacity = "0";
             loader.style.display = "block";
             state.history = [];
             
+            let finalImg = "";
+            let finalTitle = "Obra Maestra";
+
             try {
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|statue|painting');
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|painting|statue');
                 const d = await r.json();
                 const objId = d.objectIDs[Math.floor(Math.random() * 200)];
                 const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
                 const od = await or.json();
-                state.currentObjImg = od.primaryImageSmall || "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
-                title.innerText = od.title || "Obra de Arte";
+                
+                finalImg = od.primaryImageSmall || "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
+                finalTitle = od.title || "Lote de Arte";
+
+                // PARCHE DE ESPERA: No avanzar hasta que la imagen cargue
+                await new Promise((resolve, reject) => {
+                    const tImg = new Image();
+                    tImg.src = finalImg;
+                    tImg.onload = resolve;
+                    tImg.onerror = reject;
+                    setTimeout(reject, 5000); // Máximo 5 segundos de espera
+                });
             } catch(e) {
-                state.currentObjImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
-                title.innerText = "Reliquia del Museo";
+                finalImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
+                finalTitle = "Reliquia del Museo";
             }
 
-            img.src = state.currentObjImg;
-            img.onload = () => { img.style.opacity = "1"; loader.style.display = "none"; };
+            state.currentObjImg = finalImg;
+            img.src = finalImg;
+            title.innerText = finalTitle;
+            img.style.opacity = "1";
+            loader.style.display = "none";
 
             state.currentBid = Math.floor(Math.random() * 5000) + 4000;
             state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
@@ -198,7 +185,6 @@
                 if(state.leader === state.name) { lb.classList.add('leader-glow'); document.getElementById('bid-leader-name').style.color="var(--green)"; } 
                 else { lb.classList.remove('leader-glow'); document.getElementById('bid-leader-name').style.color="var(--red)"; }
 
-                // IA de contraoferta
                 if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
                     state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
                     state.timer = 8; addHistory(state.leader, state.currentBid);
@@ -208,7 +194,7 @@
         }
 
         function makeBid() {
-            if(state.balance < state.currentBid + 1000) return alert("Fondos insuficientes");
+            if(state.balance < state.currentBid + 1000) return;
             sfx.play('bid');
             state.currentBid += 1000; state.leader = state.name; state.timer = 8;
             addHistory(state.name, state.currentBid);
@@ -230,20 +216,19 @@
                 state.balance -= state.currentBid;
                 state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
                 localStorage.setItem('myCollection', JSON.stringify(state.collection));
-            } else { alert("EL LOTE SE HA VENDIDO A " + state.leader); }
+            } else { alert("VENDIDO A " + state.leader); }
             syncFirebase(); showScreen('screen-menu');
         }
 
-        // 5. COLECCIÓN Y MERCADO
         function showCollection() {
             showScreen('screen-collection');
-            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `<div onclick="openSalePanel(${i})"><img src="${art.img}"></div>`).join('') || "<p style='grid-column:1/4; text-align:center;'>Galería vacía.</p>";
+            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `<div onclick="openSalePanel(${i})"><img src="${art.img}"></div>`).join('') || "Galería vacía.";
         }
 
         function openSalePanel(i) {
             state.selectedArtIndex = i;
             const offer = Math.floor(state.collection[i].cost * (0.6 + Math.random() * 1.5));
-            document.getElementById('sale-info').innerHTML = `Pagaste: $${state.collection[i].cost.toLocaleString()}<br>Oferta de reventa: <b style="color:var(--green)">$${offer.toLocaleString()}</b>`;
+            document.getElementById('sale-info').innerHTML = `Costo: $${state.collection[i].cost.toLocaleString()}<br>Oferta: <b style="color:var(--green)">$${offer.toLocaleString()}</b>`;
             document.getElementById('confirm-sale-btn').onclick = () => {
                 sfx.play('cash');
                 state.balance += offer;
@@ -255,24 +240,15 @@
         }
 
         function closeSalePanel() { document.getElementById('sale-panel').classList.remove('panel-open'); }
-
-        async function syncFirebase() {
-            updateUI();
-            try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {}
-        }
-
+        async function syncFirebase() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true }); } catch(e) {} }
         async function showLeaderboard() {
             showScreen('screen-rank');
-            document.getElementById('rank-content').innerHTML = "Sincronizando con la red...";
+            document.getElementById('rank-content').innerHTML = "Cargando...";
             try {
                 const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
-                let html = "";
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`;
-                });
+                let html = ""; snap.forEach(doc => { const p = doc.data(); html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`; });
                 document.getElementById('rank-content').innerHTML = html;
-            } catch(e) { document.getElementById('rank-content').innerHTML = "Error de conexión."; }
+            } catch(e) { document.getElementById('rank-content').innerHTML = "Error de red."; }
         }
     </script>
 </body>
