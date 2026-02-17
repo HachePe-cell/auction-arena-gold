@@ -3,25 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena Gold | Art Dealer</title>
+    <title>Auction Arena Gold | Ultimate Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --gold: #c5a059; --bg: #0a0a0a; }
+        :root { --gold: #c5a059; --bg: #0a0a0a; --green: #44ff44; --red: #ff4444; }
         body { background: var(--bg); color: #fff; font-family: 'Georgia', serif; margin: 0; overflow: hidden; }
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; background: var(--bg); padding: 20px; z-index: 10; }
+        
+        /* Efecto de entrada suave */
+        .screen { 
+            position: fixed; inset: 0; display: none; flex-direction: column; 
+            background: var(--bg); padding: 20px; z-index: 10;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .active { display: flex; }
-        .btn { background: var(--gold); border: none; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; color: #000; text-transform: uppercase; border-radius: 4px; }
-        .rank-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; }
-        #item-img { height: 35vh; width: 100%; object-fit: contain; background: #000; border-bottom: 2px solid var(--gold); }
-        .history-box { background: rgba(255,255,255,0.05); padding: 10px; height: 60px; overflow: hidden; font-size: 0.8rem; margin: 10px 0; border-left: 3px solid var(--gold); }
         
-        /* Galería Interactiva */
-        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
-        .grid-gallery div { position: relative; aspect-ratio: 1; border: 1px solid #333; cursor: pointer; }
+        .btn { 
+            background: var(--gold); border: none; padding: 15px; font-weight: bold; 
+            cursor: pointer; width: 100%; margin: 10px 0; color: #000; 
+            text-transform: uppercase; border-radius: 8px; transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* Contenedor de imagen con carga */
+        #img-container {
+            height: 35vh; width: 100%; background: #1a1a1a; 
+            display: flex; align-items: center; justify-content: center;
+            border-bottom: 2px solid var(--gold); position: relative;
+        }
+        #item-img { max-height: 100%; max-width: 100%; z-index: 2; transition: opacity 0.3s; }
+        .loader { 
+            position: absolute; border: 4px solid #333; border-top: 4px solid var(--gold); 
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Efectos de Brillo */
+        .win-glow { animation: winGlow 1s infinite alternate; }
+        @keyframes winGlow { from { box-shadow: inset 0 0 10px var(--green); } to { box-shadow: inset 0 0 50px var(--green); } }
+        
+        .leader-glow { border: 2px solid var(--green) !important; box-shadow: 0 0 15px var(--green); }
+
+        .rank-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
+        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; }
+        .grid-gallery div { aspect-ratio: 1; border: 1px solid #333; }
         .grid-gallery img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Modal de Venta */
+
         #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #1a1a1a; padding: 20px; border-top: 3px solid var(--gold); transition: 0.3s; z-index: 20; box-sizing: border-box; }
         .panel-open { bottom: 0 !important; }
     </style>
@@ -29,36 +58,40 @@
 <body>
 
     <div id="screen-login" class="screen active" style="align-items:center; justify-content:center;">
-        <h1 style="color:var(--gold); letter-spacing: 3px;">AUCTION ARENA</h1>
-        <input type="text" id="player-name" placeholder="Tu Nombre de Postor" style="padding:12px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white;">
+        <h1 style="color:var(--gold); letter-spacing: 5px; text-shadow: 0 0 10px var(--gold);">AUCTION ARENA</h1>
+        <input type="text" id="player-name" placeholder="Tu Nombre de Postor" style="padding:12px; width:80%; text-align:center; border: 1px solid var(--gold); background: #111; color: white; border-radius: 5px;">
         <button class="btn" onclick="login()">ENTRAR AL CLUB</button>
     </div>
 
     <div id="screen-menu" class="screen" style="align-items:center;">
         <h1 style="color:var(--gold)">ESTUDIO PRIVADO</h1>
         <p style="font-size: 1.5rem;">Saldo: <span id="ui-bal" style="color:var(--gold)">$25,000</span></p>
-        <button class="btn" onclick="startAuction()">IR A LA SUBASTA</button>
+        <button class="btn" onclick="startAuction()">BUSCAR PRÓXIMA SUBASTA</button>
         <button class="btn" style="background:#222; color:var(--gold)" onclick="showCollection()">MI COLECCIÓN (<span id="col-count">0</span>)</button>
         <button class="btn" style="background:#111; color:#888; font-size:0.7rem;" onclick="showLeaderboard()">RANKING MUNDIAL</button>
     </div>
 
     <div id="screen-auction" class="screen" style="padding:0;">
-        <img id="item-img" src="">
+        <div id="img-container">
+            <div class="loader" id="auction-loader"></div>
+            <img id="item-img" src="" style="opacity:0;">
+        </div>
         <div style="padding: 20px;">
-            <h2 id="item-title" style="margin:0; font-size: 1.1rem;">---</h2>
-            <div id="bid-status" style="margin: 10px 0; padding: 5px; text-align: center; border: 1px solid #444; font-weight: bold;"><span id="bid-leader-name">---</span></div>
-            <div class="history-box" id="history-lines"></div>
+            <h2 id="item-title" style="margin:0; font-size: 1.1rem; height: 3em; overflow: hidden;">---</h2>
+            <div id="bid-status" style="margin: 10px 0; padding: 8px; text-align: center; border: 1px solid #444; font-weight: bold; transition: 0.3s;">
+                <span id="bid-leader-name">TASANDO...</span>
+            </div>
+            <div class="history-box" id="history-lines" style="background: rgba(255,255,255,0.05); padding: 10px; height: 60px; font-size: 0.8rem; border-left: 3px solid var(--gold); margin-bottom: 10px;"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div><small style="color:var(--gold)">OFERTA ACTUAL</small><div style="font-size:1.8rem; font-weight:bold;">$<span id="ui-bid">0</span></div></div>
-                <div id="ui-timer" style="font-size: 2.2rem; color:#ff4444; font-weight:bold;">12</div>
+                <div id="ui-timer" style="font-size: 2.2rem; color:var(--red); font-weight:bold;">12</div>
             </div>
             <button class="btn" onclick="makeBid()">OFERTAR +$1,000</button>
         </div>
     </div>
 
     <div id="screen-collection" class="screen">
-        <h2 style="color:var(--gold); text-align:center;">INVENTARIO DE ARTE</h2>
-        <p style="text-align:center; font-size:0.8rem; color:#888;">Toca una pieza para tasarla o venderla</p>
+        <h2 style="color:var(--gold); text-align:center;">INVENTARIO</h2>
         <div id="gallery-content" class="grid-gallery"></div>
         <button class="btn" onclick="showScreen('screen-menu')">VOLVER</button>
     </div>
@@ -70,202 +103,71 @@
     </div>
 
     <div id="sale-panel">
-        <h3 style="margin:0; color:var(--gold)">Oferta de Coleccionista</h3>
-        <p id="sale-info" style="font-size:0.9rem;">Tasando obra...</p>
+        <h3 style="margin:0; color:var(--gold)">Oferta de Compra</h3>
+        <p id="sale-info" style="font-size:0.9rem;">Tasando...</p>
         <div style="display:flex; gap:10px;">
-            <button class="btn" id="confirm-sale-btn" style="background:#44ff44">VENDER</button>
-            <button class="btn" onclick="closeSalePanel()" style="background:#333; color:#fff">CONSERVAR</button>
+            <button class="btn" id="confirm-sale-btn" style="background:var(--green)">VENDER</button>
+            <button class="btn" onclick="closeSalePanel()" style="background:#333; color:#fff">CANCELAR</button>
         </div>
     </div>
 
-  
-           <script>
-    // 1. CONFIGURACIÓN DE FIREBASE
-    const firebaseConfig = {
-        apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
-        authDomain: "grandauctioneer.firebaseapp.com",
-        projectId: "grandauctioneer",
-        storageBucket: "grandauctioneer.firebasestorage.app",
-        messagingSenderId: "779568791424",
-        appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    <script>
+        // CONFIG FIREBASE (Tus llaves actuales)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
+            authDomain: "grandauctioneer.firebaseapp.com",
+            projectId: "grandauctioneer",
+            storageBucket: "grandauctioneer.firebasestorage.app",
+            messagingSenderId: "779568791424",
+            appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    // 2. VARIABLES DE ESTADO
-    const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Coleccionista de Dubái"];
-    let state = { 
-        name: "", 
-        balance: 25000, 
-        currentBid: 0, 
-        timer: 12, 
-        interval: null, 
-        leader: "", 
-        history: [],
-        collection: JSON.parse(localStorage.getItem('myCollection')) || [],
-        currentObjImg: "", 
-        selectedArtIndex: null
-    };
+        const RIVALES = ["Magnate Suizo", "Inversor de NY", "Barón von Art", "Galería de Londres", "Coleccionista de Dubái"];
+        let state = { 
+            name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", history: [],
+            collection: JSON.parse(localStorage.getItem('myCollection')) || [],
+            currentObjImg: "", selectedArtIndex: null
+        };
 
-    // 3. FUNCIONES DE NAVEGACIÓN
-    function login() {
-        state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999);
-        updateUI();
-        showScreen('screen-menu');
-    }
+        function login() {
+            state.name = document.getElementById('player-name').value || "Postor_" + Math.floor(Math.random()*999);
+            updateUI();
+            showScreen('screen-menu');
+        }
 
-    function updateUI() {
-        document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
-        document.getElementById('col-count').innerText = state.collection.length;
-    }
+        function updateUI() {
+            document.getElementById('ui-bal').innerText = state.balance.toLocaleString();
+            document.getElementById('col-count').innerText = state.collection.length;
+        }
 
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        updateUI();
-    }
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            updateUI();
+        }
 
-    // 4. LÓGICA DE SUBASTA (CON CORRECCIÓN PARA NO SALIRSE)
-    async function startAuction() {
-        showScreen('screen-auction');
-        document.getElementById('item-title').innerText = "Buscando lote en el museo...";
-        document.getElementById('item-img').src = ""; 
-        state.history = [];
-        
-        try {
-            const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting|statue|gold');
-            const d = await r.json();
-            const randomIndex = Math.floor(Math.random() * Math.min(d.objectIDs.length, 150));
-            const objId = d.objectIDs[randomIndex];
+        async function startAuction() {
+            showScreen('screen-auction');
+            document.getElementById('item-title').innerText = "Conectando con el Museo...";
+            document.getElementById('item-img').style.opacity = "0";
+            document.getElementById('auction-loader').style.display = "block";
+            state.history = [];
             
-            const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
-            const od = await or.json();
+            try {
+                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=statue|painting|gold');
+                const d = await r.json();
+                const objId = d.objectIDs[Math.floor(Math.random() * 200)];
+                const or = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`);
+                const od = await or.json();
 
-            if(!od.primaryImageSmall) throw new Error("Sin imagen");
-
-            state.currentObjImg = od.primaryImageSmall;
-            document.getElementById('item-img').src = state.currentObjImg;
-            document.getElementById('item-title').innerText = od.title;
-        } catch(e) { 
-            console.log("Error de API, usando respaldo...");
-            state.currentObjImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
-            document.getElementById('item-img').src = state.currentObjImg;
-            document.getElementById('item-title').innerText = "Reliquia de Oro (Obra de Respaldo)";
-        }
-
-        state.currentBid = Math.floor(Math.random() * 5000) + 4000;
-        state.leader = RIVALES[Math.floor(Math.random() * RIVALES.length)];
-        state.timer = 12;
-        addHistory(state.leader, state.currentBid);
-        runAuction();
-    }
-
-    function runAuction() {
-        clearInterval(state.interval);
-        state.interval = setInterval(() => {
-            state.timer--;
-            document.getElementById('ui-timer').innerText = state.timer;
-            document.getElementById('ui-bid').innerText = state.currentBid.toLocaleString();
-            document.getElementById('bid-leader-name').innerText = "LÍDER: " + state.leader;
-            document.getElementById('bid-leader-name').style.color = (state.leader === state.name) ? "#44ff44" : "#ff4444";
-
-            if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
-                state.currentBid += 1000;
-                state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
-                state.timer = 8;
-                addHistory(state.leader, state.currentBid);
+                if(!od.primaryImageSmall) throw new Error();
+                state.currentObjImg = od.primaryImageSmall;
+                document.getElementById('item-title').innerText = od.title;
+            } catch(e) {
+                state.currentObjImg = "https://images.metmuseum.org/CRDImages/ad/mobile-large/DP122325.jpg";
+                document.getElementById('item-title').innerText = "Reliquia del Museo (Respaldo)";
             }
 
-            if(state.timer <= 0) {
-                clearInterval(state.interval);
-                finishAuction();
-            }
-        }, 1000);
-    }
-
-    function makeBid() {
-        if(state.balance < state.currentBid + 1000) return alert("Dinero insuficiente");
-        state.currentBid += 1000;
-        state.leader = state.name;
-        state.timer = 8;
-        addHistory(state.name, state.currentBid);
-    }
-
-    function addHistory(user, amount) {
-        const line = `<div style="color:${user === state.name ? '#44ff44':'#ccc'}">${user}: $${amount.toLocaleString()}</div>`;
-        state.history.unshift(line);
-        if(state.history.length > 3) state.history.pop();
-        document.getElementById('history-lines').innerHTML = state.history.join('');
-    }
-
-    async function finishAuction() {
-        if(state.leader === state.name) {
-            alert("¡PIEZA ADQUIRIDA!");
-            state.balance -= state.currentBid;
-            state.collection.push({ img: state.currentObjImg, cost: state.currentBid });
-            localStorage.setItem('myCollection', JSON.stringify(state.collection));
-        } else {
-            alert("Subasta terminada. Ganó: " + state.leader);
-        }
-        syncFirebase();
-        showScreen('screen-menu');
-    }
-
-    // 5. COLECCIÓN Y VENTAS
-    function showCollection() {
-        showScreen('screen-collection');
-        const gallery = document.getElementById('gallery-content');
-        gallery.innerHTML = state.collection.map((art, index) => `
-            <div onclick="openSalePanel(${index})">
-                <img src="${art.img}">
-            </div>
-        `).join('') || "<p style='grid-column:1/4;text-align:center;'>Galería vacía.</p>";
-    }
-
-    function openSalePanel(index) {
-        state.selectedArtIndex = index;
-        const art = state.collection[index];
-        const offer = Math.floor(art.cost * (0.5 + Math.random() * 1.5));
-        document.getElementById('sale-info').innerHTML = `Costo original: <b>$${art.cost.toLocaleString()}</b>.<br>Oferta actual: <b style="color:#44ff44">$${offer.toLocaleString()}</b>`;
-        document.getElementById('confirm-sale-btn').onclick = () => confirmSale(offer);
-        document.getElementById('sale-panel').classList.add('panel-open');
-    }
-
-    function closeSalePanel() {
-        document.getElementById('sale-panel').classList.remove('panel-open');
-    }
-
-    async function confirmSale(amount) {
-        state.balance += amount;
-        state.collection.splice(state.selectedArtIndex, 1);
-        localStorage.setItem('myCollection', JSON.stringify(state.collection));
-        closeSalePanel();
-        syncFirebase();
-        showCollection();
-    }
-
-    // 6. RANKING Y SYNC
-    async function syncFirebase() {
-        updateUI();
-        try {
-            await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance }, { merge: true });
-        } catch(e) { console.log("Error sync Firebase"); }
-    }
-
-    async function showLeaderboard() {
-        showScreen('screen-rank');
-        document.getElementById('rank-content').innerHTML = "Cargando...";
-        try {
-            const snap = await db.collection("leaderboard").orderBy("balance", "desc").limit(10).get();
-            let html = "";
-            snap.forEach(doc => {
-                const p = doc.data();
-                html += `<div class="rank-row"><span>${p.name}</span><span style="color:var(--gold)">$${p.balance.toLocaleString()}</span></div>`;
-            });
-            document.getElementById('rank-content').innerHTML = html;
-        } catch(e) { document.getElementById('rank-content').innerHTML = "Error al cargar ranking."; }
-    }
-</script>
-
-</body>
-</html>
+            // Precarga de imagen para evitar par
