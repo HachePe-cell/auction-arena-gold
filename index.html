@@ -3,146 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The MET: Elite Auctioneer</title>
+    <title>Grand Auctioneer: Museum Edition</title>
     <style>
-        :root {
-            --gold: #c5a059; --bg: #0a0a0a; --panel: #1a1a1a; --accent: #8b0000;
-        }
-        body { 
-            background: var(--bg); color: #fff; font-family: 'Times New Roman', serif;
-            margin: 0; overflow: hidden; height: 100vh;
-        }
-
-        /* --- UI Estilo Galería --- */
-        .gallery-frame {
-            width: 100%; height: 40vh; background: #000;
-            display: flex; align-items: center; justify-content: center;
-            border-bottom: 2px solid var(--gold); position: relative;
-        }
-        #item-img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        :root { --gold: #c5a059; --bg: #0a0a0a; --accent: #8b0000; }
+        body { background: var(--bg); color: #fff; font-family: 'Times New Roman', serif; margin: 0; overflow: hidden; }
         
-        .loading-overlay {
-            position: absolute; inset: 0; background: #000;
-            display: flex; align-items: center; justify-content: center; z-index: 5;
-        }
-
-        .info-panel {
-            padding: 20px; background: linear-gradient(to bottom, #111, #000);
-            flex-grow: 1; display: flex; flex-direction: column;
-        }
-        
-        .lot-header { color: var(--gold); font-family: Arial; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; }
-        .item-title { font-size: 1.6rem; margin: 10px 0; line-height: 1.2; }
-        .item-date { color: #888; font-style: italic; font-size: 0.9rem; margin-bottom: 15px; }
-
-        .bid-area {
-            background: rgba(255,255,255,0.03); border-radius: 5px; padding: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .btn-auction {
-            background: var(--gold); color: #000; border: none; padding: 15px;
-            font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%;
-            margin-top: 15px; font-size: 1.1rem;
-        }
-        .btn-auction:disabled { background: #333; color: #666; }
-
-        /* Pantallas */
+        /* UI Estilo Museo */
         .screen { position: fixed; inset: 0; display: none; flex-direction: column; z-index: 10; background: var(--bg); }
         .active { display: flex; }
+        
+        .gallery-frame { 
+            width: 100%; height: 45vh; background: #000; display: flex; align-items: center; 
+            justify-content: center; border-bottom: 2px solid var(--gold); position: relative;
+        }
+        #item-img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s; }
+
+        .info-panel { padding: 20px; flex-grow: 1; background: linear-gradient(to bottom, #111, #000); }
+        .btn-auction { 
+            background: var(--gold); color: #000; border: none; padding: 18px; 
+            font-weight: bold; width: 100%; font-size: 1.2rem; cursor: pointer;
+        }
+
+        /* Animación de Martillazo */
+        .hammer-flash { animation: flashRed 0.3s; }
+        @keyframes flashRed { 0% { background: var(--accent); } 100% { background: var(--bg); } }
+
+        #loader { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9); 
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
     </style>
 </head>
-<body>
+<body id="main-body">
 
     <div id="screen-menu" class="screen active" style="align-items: center; justify-content: center;">
-        <h1 style="letter-spacing: 5px; color: var(--gold); text-align: center;">THE MET<br><span style="font-size: 0.8rem; color: #fff;">SALA DE SUBASTAS PRIVADA</span></h1>
-        <div style="margin: 30px 0; font-size: 1.5rem;">Saldo: <span id="display-bal" style="color:var(--gold)">$25,000</span></div>
-        <button class="btn-auction" style="width: 250px;" onclick="fetchMetObject()">BUSCAR LOTE REAL</button>
+        <h1 style="color: var(--gold); letter-spacing: 5px;">GRAND AUCTIONEER</h1>
+        <div style="font-size: 1.5rem; margin-bottom: 30px;">Saldo: $<span id="display-bal">25,000</span></div>
+        <button class="btn-auction" style="width: 280px;" onclick="fetchObject()">INICIAR SUBASTA</button>
+        <p id="conn-status" style="font-size: 0.7rem; color: #555; margin-top: 10px;">Sistema Listo</p>
     </div>
 
     <div id="screen-auction" class="screen">
-        <div id="loader" class="loading-overlay">Cargando desde el Museo...</div>
-        
-        <div class="gallery-frame">
-            <img id="item-img" src="" alt="">
-        </div>
-
+        <div id="loader">Cargando Lote Real...</div>
+        <div class="gallery-frame"><img id="item-img" src=""></div>
         <div class="info-panel">
-            <div class="lot-header" id="lot-dept">Department</div>
-            <h2 class="item-title" id="item-title">---</h2>
-            <div class="item-date" id="item-date">---</div>
-            
-            <div class="bid-area">
+            <div id="item-dept" style="color: var(--gold); font-size: 0.7rem; letter-spacing: 2px;">GALERÍA PRIVADA</div>
+            <h2 id="item-title" style="margin: 10px 0;">---</h2>
+            <div id="bid-box" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                 <div>
-                    <div style="font-size: 0.8rem; opacity: 0.6;">OFERTA ACTUAL</div>
-                    <div style="font-size: 2rem; color: var(--gold); font-weight: bold;">$<span id="live-bid">0</span></div>
+                    <small>OFERTA</small>
+                    <div style="font-size: 2.2rem; color: var(--gold); font-weight: bold;">$<span id="live-bid">0</span></div>
                 </div>
-                <div id="timer" style="font-size: 2rem; color: var(--accent); font-weight: bold;">12s</div>
+                <div id="timer" style="font-size: 2.5rem; font-weight: bold; color: var(--accent);">10</div>
             </div>
-
-            <button class="btn-auction" id="bid-btn" onclick="placeBid()">SUBIR OFERTA +$1,000</button>
-            <button onclick="exitAuction()" style="background:none; border:none; color:#666; margin-top:20px; cursor:pointer;">RETIRARSE</button>
+            <button class="btn-auction" style="margin-top: 25px;" onclick="placeBid()">PUJAR +$1,000</button>
         </div>
     </div>
 
     <script>
-        let balance = 50000;
+        let balance = 25000;
         let currentBid = 0;
-        let timeLeft = 12;
+        let timeLeft = 10;
         let auctionInterval;
-        let currentObject = null;
 
-        // --- CONEXIÓN CON LA API DEL MET ---
-        async function fetchMetObject() {
+        // --- BASE DE DATOS OFFLINE (Backup) ---
+        const OFFLINE_COLLECTION = [
+            { title: "Cetro de Oro Ceremonial", dept: "Antigüedades Egipcias", img: "https://images.pexels.com/photos/3354675/pexels-photo-3354675.jpeg?auto=compress&cs=tinysrgb&w=400", date: "1300 a.C." },
+            { title: "Reloj de Bolsillo Imperial", dept: "Relojería Europea", img: "https://images.pexels.com/photos/210545/pexels-photo-210545.jpeg?auto=compress&cs=tinysrgb&w=400", date: "Siglo XVIII" },
+            { title: "Vaso de Dinastía Ming", dept: "Arte Asiático", img: "https://images.pexels.com/photos/1080646/pexels-photo-1080646.jpeg?auto=compress&cs=tinysrgb&w=400", date: "1450 d.C." }
+        ];
+
+        async function fetchObject() {
             showScreen('screen-auction');
-            document.getElementById('loader').style.display = 'flex';
-            
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+
             try {
-                // 1. Buscamos objetos que tengan imagen y sean del departamento de 'European Sculpture' o 'Asian Art'
-                const searchRes = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold|statue|vase');
-                const searchData = await searchRes.json();
-                
-                // Elegimos un objeto al azar de los resultados
-                const randomId = searchData.objectIDs[Math.floor(Math.random() * 200)]; // Tomamos de los primeros 200 para velocidad
-                
-                // 2. Traemos los detalles del objeto
-                const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${randomId}`);
+                // Intento de conexión con timeout de 4 segundos
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 4000);
+
+                const res = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=gold', { signal: controller.signal });
+                const data = await res.json();
+                const objId = data.objectIDs[Math.floor(Math.random() * 100)];
+
+                const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objId}`, { signal: controller.signal });
                 const objData = await objRes.json();
+                clearTimeout(id);
 
-                if(!objData.primaryImage) return fetchMetObject(); // Reintento si no hay imagen
+                if(!objData.primaryImageSmall) throw "No Image";
+                
+                setupGame(objData.title, objData.department, objData.primaryImageSmall);
+                document.getElementById('conn-status').innerText = "Conectado al MET Museum";
 
-                setupAuction(objData);
-            } catch (err) {
-                alert("Error de conexión con el Museo.");
-                exitAuction();
+            } catch (e) {
+                // MODO OFFLINE ACTIVADO
+                const backup = OFFLINE_COLLECTION[Math.floor(Math.random() * OFFLINE_COLLECTION.length)];
+                setupGame(backup.title, backup.dept, backup.img);
+                document.getElementById('conn-status').innerText = "Modo Offline (Caché)";
+            } finally {
+                loader.style.display = 'none';
             }
         }
 
-        function setupAuction(data) {
-            currentObject = data;
-            currentBid = Math.floor(Math.random() * 5000) + 2000;
-            timeLeft = 12;
-
-            document.getElementById('item-img').src = data.primaryImageSmall;
-            document.getElementById('item-title').innerText = data.title;
-            document.getElementById('item-date').innerText = data.objectDate || "Periodo desconocido";
-            document.getElementById('lot-dept').innerText = "MET: " + data.department;
-            document.getElementById('live-bid').innerText = currentBid.toLocaleString();
-            
-            document.getElementById('loader').style.display = 'none';
-            startTimer();
+        function setupGame(title, dept, img) {
+            document.getElementById('item-title').innerText = title;
+            document.getElementById('item-dept').innerText = dept;
+            document.getElementById('item-img').src = img;
+            currentBid = Math.floor(Math.random() * 5000) + 1000;
+            timeLeft = 10;
+            updateUI();
+            startAuction();
         }
 
-        function startTimer() {
+        function startAuction() {
             clearInterval(auctionInterval);
             auctionInterval = setInterval(() => {
                 timeLeft -= 1;
-                document.getElementById('timer').innerText = timeLeft + "s";
-
-                // Bot inteligente puja aleatoriamente
-                if(timeLeft > 1 && Math.random() > 0.85) {
+                document.getElementById('timer').innerText = timeLeft;
+                
+                // IA Competidora
+                if(timeLeft > 1 && Math.random() > 0.8) {
                     currentBid += 1000;
-                    document.getElementById('live-bid').innerText = currentBid.toLocaleString();
+                    updateUI();
                 }
 
                 if(timeLeft <= 0) {
@@ -153,26 +136,28 @@
         }
 
         function placeBid() {
-            if(balance < currentBid + 1000) return alert("Fondos insuficientes.");
             currentBid += 1000;
-            timeLeft = 8; // Reset de tensión
+            timeLeft = 6;
+            updateUI();
+        }
+
+        function updateUI() {
             document.getElementById('live-bid').innerText = currentBid.toLocaleString();
+            document.getElementById('display-bal').innerText = balance.toLocaleString();
         }
 
         function finishAuction() {
-            alert(`SUBASTA CERRADA. El martillo cae en $${currentBid.toLocaleString()}.`);
-            exitAuction();
-        }
-
-        function exitAuction() {
-            clearInterval(auctionInterval);
-            showScreen('screen-menu');
+            document.getElementById('main-body').classList.add('hammer-flash');
+            setTimeout(() => {
+                document.getElementById('main-body').classList.remove('hammer-flash');
+                alert("¡SUBASTA TERMINADA! El precio final fue: $" + currentBid.toLocaleString());
+                showScreen('screen-menu');
+            }, 300);
         }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.getElementById('display-bal').innerText = balance.toLocaleString();
         }
     </script>
 </body>
