@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auction Arena | Gold Audio Edition</title>
@@ -13,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /* Tu CSS actual está perfecto, no hace falta tocarlo */
         :root { 
             --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f7e0a1 50%, #c5a059 100%);
             --dark-bg: #050505;
@@ -109,7 +107,6 @@
     </div>
 
     <script>
-        // MOTOR DE AUDIO
         const AudioEngine = {
             ctx: null,
             init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -126,7 +123,6 @@
             }
         };
 
-        // FIREBASE
         const firebaseConfig = { apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0", authDomain: "grandauctioneer.firebaseapp.com", projectId: "grandauctioneer", storageBucket: "grandauctioneer.firebasestorage.app", messagingSenderId: "779568791424", appId: "1:779568791424:web:c71c5fd48c541755ed0b65" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -137,13 +133,10 @@
         async function login() {
             const nameInput = document.getElementById('player-name').value.trim();
             if(!nameInput) return alert("Ingresa tu nombre");
-            
             state.name = nameInput;
             AudioEngine.init();
-            
             const btn = document.getElementById('login-btn');
             btn.disabled = true; btn.innerText = "CARGANDO BÓVEDA...";
-
             try {
                 const doc = await db.collection("leaderboard").doc(state.name).get();
                 if(doc.exists) {
@@ -165,12 +158,9 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            
-            // Gestión de Anuncios
             const ad = document.getElementById('ad-container');
             if(id === 'screen-menu' || id === 'screen-collection') ad.style.display = 'flex';
             else ad.style.display = 'none';
-            
             updateUI();
         }
 
@@ -187,7 +177,6 @@
             clearInterval(state.interval);
             img.style.opacity = "0"; loader.style.display = "block";
             title.innerText = "Localizando obra...";
-
             let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`;
             try {
                 const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting');
@@ -195,7 +184,6 @@
                 const obj = await (await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${d.objectIDs[Math.floor(Math.random()*100)]}`)).json();
                 if(obj.primaryImageSmall) { finalImg = obj.primaryImageSmall; title.innerText = obj.title; }
             } catch(e) {}
-
             img.src = finalImg;
             img.onload = () => { img.style.opacity = "1"; loader.style.display = "none"; state.currentArtImg = finalImg; iniciarReloj(); };
         }
