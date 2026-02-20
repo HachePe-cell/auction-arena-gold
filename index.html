@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | BOT Fix</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
+    <title>Elite Cards | Fix Pro</title>
     <style>
         :root { --gold: #d4af37; --felt: #0a5c36; --oro: #b8860b; --copa: #d32f2f; --espada: #1976d2; --basto: #388e3c; }
         body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .active { display: flex; }
 
+        /* Estilos Menú */
         .card-menu { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 85%; max-width: 350px; }
         .btn-main { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 8px; }
+        .btn-exit { background: #900; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; position: absolute; top: 15px; left: 15px; font-size: 12px; z-index: 200; }
         input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #eee; color: #000; }
 
+        /* Estilos Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
         .scoreboard { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; z-index: 100; }
         
@@ -25,7 +24,7 @@
         .card { 
             width: 70px; height: 105px; background: white; border-radius: 8px; color: black;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 3px solid #333; cursor: pointer;
+            font-weight: bold; border: 3px solid #333; cursor: pointer; position: relative;
         }
         .card[data-palo="Oros"] { color: var(--oro); border-color: var(--oro); }
         .card[data-palo="Copas"] { color: var(--copa); border-color: var(--copa); }
@@ -52,17 +51,26 @@
     </div>
 
     <div id="screen-game" class="screen">
+        <button class="btn-exit" onclick="abandonarPartida()">✖ ABANDONAR</button>
+        
         <div class="scoreboard">
             TÚ: <span id="score-mine">0</span> | BOT: <span id="score-theirs">0</span>
         </div>
-        <div id="turn-indicator" class="msg">Tu turno</div>
+        
+        <div id="turn-indicator" class="msg">Cargando...</div>
+        
         <div id="played-area"></div>
+        
         <div class="hand" id="my-hand"></div>
     </div>
 
     <script>
-        // Configuración mínima necesaria
-        let miNombre = "", miMano = [], manoBot = [], mesaLocal = null;
+        let miNombre = "", miMano = [], manoBot = [], mazoActual = [];
+        let puntosJugador = 0, puntosBot = 0;
+        let turnoActual = "";
+        let cartasEnMesa = [];
+        let juegoTerminado = false;
+
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
 
         function obtenerPoder(v, p) {
@@ -80,106 +88,110 @@
             return m.sort(() => Math.random() - 0.5);
         }
 
+        function repartirCartas() {
+            mazoActual = generarMazo();
+            miMano = [mazoActual[0], mazoActual[2], mazoActual[4]];
+            manoBot = [mazoActual[1], mazoActual[3], mazoActual[5]];
+        }
+
         function iniciarModoBot() {
             miNombre = document.getElementById('player-nick').value || "Jugador";
+            puntosJugador = 0; puntosBot = 0; juegoTerminado = false;
+            cartasEnMesa = [];
+            
             document.getElementById('screen-login').style.display = 'none';
             document.getElementById('screen-game').style.display = 'flex';
             
-            const mazo = generarMazo();
-            miMano = [mazo[0], mazo[2], mazo[4]];
-            manoBot = [mazo[1], mazo[3], mazo[5]];
-            
-            mesaLocal = {
-                turno: miNombre,
-                puntosHost: 0,
-                puntosInvitado: 0,
-                cartasTiradas: []
-            };
+            repartirCartas();
+            turnoActual = miNombre;
             actualizarInterfaz();
         }
 
+        function abandonarPartida() {
+            if(confirm("¿Seguro que quieres abandonar la partida?")) {
+                location.reload();
+            }
+        }
+
         function tirarCartaJugador(index) {
-            if (mesaLocal.turno !== miNombre || mesaLocal.cartasTiradas.length >= 2) return;
+            if (turnoActual !== miNombre || cartasEnMesa.length >= 2 || juegoTerminado) return;
 
             const carta = miMano.splice(index, 1)[0];
-            mesaLocal.cartasTiradas.push({ jugador: miNombre, carta: carta });
-            mesaLocal.turno = "Bot";
+            cartasEnMesa.push({ jugador: miNombre, carta: carta });
             
-            actualizarInterfaz();
-            
-            // Si el jugador tiró primero, el BOT responde
-            if (mesaLocal.cartasTiradas.length === 1) {
+            if (cartasEnMesa.length === 1) {
+                turnoActual = "Bot";
+                actualizarInterfaz();
                 setTimeout(decisionBot, 1000);
             } else {
+                actualizarInterfaz();
                 verificarGanadorRonda();
             }
         }
 
         function decisionBot() {
+            if (juegoTerminado) return;
             const dif = document.getElementById('bot-difficulty').value;
             let index = 0;
 
-            if (dif === "hard") {
-                // Inteligencia: busca la carta que apenas supere a la del jugador o la más baja
-                const cartaJugador = mesaLocal.cartasTiradas[0].carta;
-                const poderJugador = obtenerPoder(cartaJugador.valor, cartaJugador.palo);
-                // Intenta ganar con la mínima carta posible
+            if (dif === "hard" && cartasEnMesa.length === 1) {
+                const pJugador = obtenerPoder(cartasEnMesa[0].carta.valor, cartasEnMesa[0].carta.palo);
                 manoBot.sort((a,b) => obtenerPoder(a.valor, a.palo) - obtenerPoder(b.valor, b.palo));
-                index = manoBot.findIndex(c => obtenerPoder(c.valor, c.palo) > poderJugador);
-                if (index === -1) index = 0; // Si no puede ganar, tira la más baja
+                let mejorOpcion = manoBot.findIndex(c => obtenerPoder(c.valor, c.palo) > pJugador);
+                index = mejorOpcion !== -1 ? mejorOpcion : 0;
             } else {
                 index = Math.floor(Math.random() * manoBot.length);
             }
 
             const carta = manoBot.splice(index, 1)[0];
-            mesaLocal.cartasTiradas.push({ jugador: "Bot", carta: carta });
+            cartasEnMesa.push({ jugador: "Bot", carta: carta });
             
-            actualizarInterfaz();
-            verificarGanadorRonda();
-        }
-
-        function verificarGanadorRonda() {
-            if (mesaLocal.cartasTiradas.length === 2) {
-                setTimeout(() => {
-                    const p1 = obtenerPoder(mesaLocal.cartasTiradas[0].carta.valor, mesaLocal.cartasTiradas[0].carta.palo);
-                    const p2 = obtenerPoder(mesaLocal.cartasTiradas[1].carta.valor, mesaLocal.cartasTiradas[1].carta.palo);
-                    
-                    // Quien tiró la carta con más poder gana (o el primero si empatan)
-                    const ganador = (p1 >= p2) ? mesaLocal.cartasTiradas[0].jugador : mesaLocal.cartasTiradas[1].jugador;
-                    
-                    if (ganador === miNombre) mesaLocal.puntosHost++;
-                    else mesaLocal.puntosInvitado++;
-
-                    mesaLocal.cartasTiradas = [];
-                    mesaLocal.turno = ganador;
-
-                    // Si se acaban las cartas, repartir de nuevo
-                    if (miMano.length === 0) {
-                        const mazo = generarMazo();
-                        miMano = [mazo[0], mazo[2], mazo[4]];
-                        manoBot = [mazo[1], mazo[3], mazo[5]];
-                    }
-
-                    // Verificar fin de juego
-                    if (mesaLocal.puntosHost >= 15 || mesaLocal.puntosInvitado >= 15) {
-                        alert("JUEGO TERMINADO. Ganador: " + (mesaLocal.puntosHost >= 15 ? miNombre : "Bot"));
-                        location.reload();
-                    }
-
-                    actualizarInterfaz();
-
-                    // Si ganó el BOT, él empieza la siguiente ronda
-                    if (mesaLocal.turno === "Bot") {
-                        setTimeout(decisionBot, 1000);
-                    }
-                }, 1500);
+            if (cartasEnMesa.length === 1) {
+                turnoActual = miNombre;
+                actualizarInterfaz();
+            } else {
+                actualizarInterfaz();
+                verificarGanadorRonda();
             }
         }
 
+        function verificarGanadorRonda() {
+            setTimeout(() => {
+                const p1 = obtenerPoder(cartasEnMesa[0].carta.valor, cartasEnMesa[0].carta.palo);
+                const p2 = obtenerPoder(cartasEnMesa[1].carta.valor, cartasEnMesa[1].carta.palo);
+                
+                const ganador = (p1 >= p2) ? cartasEnMesa[0].jugador : cartasEnMesa[1].jugador;
+                
+                if (ganador === miNombre) puntosJugador++;
+                else puntosBot++;
+
+                cartasEnMesa = [];
+                turnoActual = ganador;
+
+                // Si se acaban las 3 cartas de la mano
+                if (miMano.length === 0) {
+                    repartirCartas();
+                }
+
+                if (puntosJugador >= 15 || puntosBot >= 15) {
+                    juegoTerminado = true;
+                    alert("¡FIN DEL JUEGO! Ganador: " + (puntosJugador >= 15 ? miNombre : "Bot"));
+                    location.reload();
+                }
+
+                actualizarInterfaz();
+
+                // Si ganó el BOT la ronda, le toca empezar la siguiente
+                if (turnoActual === "Bot") {
+                    setTimeout(decisionBot, 1000);
+                }
+            }, 1200);
+        }
+
         function actualizarInterfaz() {
-            document.getElementById('score-mine').innerText = mesaLocal.puntosHost;
-            document.getElementById('score-theirs').innerText = mesaLocal.puntosInvitado;
-            document.getElementById('turn-indicator').innerText = mesaLocal.turno === miNombre ? "TU TURNO" : "Bot pensando...";
+            document.getElementById('score-mine').innerText = puntosJugador;
+            document.getElementById('score-theirs').innerText = puntosBot;
+            document.getElementById('turn-indicator').innerText = turnoActual === miNombre ? "TU TURNO" : "Bot pensando...";
 
             const handDiv = document.getElementById('my-hand');
             handDiv.innerHTML = "";
@@ -194,7 +206,7 @@
 
             const tableDiv = document.getElementById('played-area');
             tableDiv.innerHTML = "";
-            mesaLocal.cartasTiradas.forEach(t => {
+            cartasEnMesa.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'card';
                 div.setAttribute('data-palo', t.carta.palo);
