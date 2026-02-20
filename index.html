@@ -2,250 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auction Arena | Gold Audio Edition</title>
-
-    <meta name="google-adsense-account" content="ca-pub-1479705494159422">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1479705494159422" crossorigin="anonymous"></script> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Cards | Baraja Española</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { 
-            --gold-gradient: linear-gradient(135deg, #c5a059 0%, #f7e0a1 50%, #c5a059 100%);
-            --dark-bg: #050505;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --gold: #c5a059;
-            --green: #44ff44;
-            --red: #ff4444;
+        /* Diseño "App-First" (Pensado para móviles) */
+        :root {
+            --gold: #d4af37;
+            --dark-green: #0a3d2e;
+            --wood: #2c1b12;
         }
 
-        body { 
-            background: var(--dark-bg); color: #fff; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; overflow: hidden;
-            background-image: radial-gradient(circle at top right, #1a1a1a, #050505);
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            background-color: #121212;
+            color: white; font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; /* Evita que la pantalla rebote */
         }
-        
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 25px; box-sizing: border-box; animation: fadeIn 0.4s ease-out; }
+
+        /* Pantallas */
+        .screen {
+            position: absolute; width: 100%; height: 100%;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
         .active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        .header-title h1 { font-family: 'Georgia', serif; font-size: 2rem; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; text-align: center; margin: 0; }
-        .glass-card { background: var(--card-bg); border: 1px solid rgba(197, 160, 89, 0.2); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        /* Estilo del Menú */
+        .card-menu {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px 20px; border-radius: 25px;
+            border: 1px solid var(--gold);
+            text-align: center; width: 85%; max-width: 350px;
+        }
 
-        .btn-main { background: var(--gold-gradient); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); width: 100%; }
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: rgba(255,255,255,0.03); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; }
+        input {
+            width: 100%; padding: 15px; margin: 20px 0;
+            border-radius: 12px; border: none; font-size: 1rem;
+            box-sizing: border-box; background: #eee;
+        }
 
-        .museum-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; overflow-y: auto; padding-bottom: 120px; }
-        .art-card { background: #111; border-radius: 12px; overflow: hidden; border: 1px solid #222; position: relative; }
-        .art-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .art-card .price-tag { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: var(--gold); font-size: 0.7rem; text-align: center; padding: 5px 0; }
+        .btn-main {
+            background: linear-gradient(135deg, var(--gold), #f7e0a1);
+            color: #000; border: none; padding: 15px 40px;
+            border-radius: 12px; font-weight: bold;
+            font-size: 1.1rem; cursor: pointer; width: 100%;
+        }
 
-        #sale-panel { position: fixed; bottom: -100%; left: 0; width: 100%; background: #0a0a0a; border-top: 3px solid var(--gold); padding: 30px 25px; box-sizing: border-box; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 101; border-radius: 30px 30px 0 0; }
-        .panel-open { bottom: 0 !important; }
-
-        #img-container { height: 30vh; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #333; }
-        #item-img { max-height: 100%; max-width: 100%; opacity: 0; transition: 0.4s; }
-        .loader { position: absolute; border: 3px solid #111; border-top: 3px solid var(--gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* Lobby de Salas */
+        .room-card {
+            background: #1e1e1e; padding: 15px; border-radius: 12px;
+            margin: 10px 0; width: 90%; display: flex;
+            justify-content: space-between; align-items: center;
+            border-left: 5px solid var(--gold);
+        }
     </style>
 </head>
 <body>
 
-    <div id="screen-login" class="screen active" style="justify-content: center;">
-        <div class="header-title"><h1>AUCTION ARENA</h1><p style="text-align:center; color:#666">PRO COLLECTOR</p></div>
-        <input type="text" id="player-name" placeholder="NOMBRE DEL POSTOR" style="background:rgba(255,255,255,0.05); border:1px solid #333; padding:18px; border-radius:12px; color:#fff; text-align:center; margin: 20px 0;">
-        <button class="btn-main" id="login-btn" onclick="login()">INGRESAR AL CLUB</button>
-    </div>
-
-    <div id="screen-menu" class="screen">
-        <div class="header-title"><h1>ESTUDIO</h1></div>
-        <div class="glass-card" style="text-align: center; margin-bottom: 20px;">
-            <small style="color:var(--gold)">CAPITAL DISPONIBLE</small>
-            <div id="ui-bal" style="font-size: 2.5rem; font-weight: 800;">$25,000</div>
-        </div>
-        <button class="btn-main" onclick="startAuction()" style="margin-bottom: 15px;">NUEVA SUBASTA</button>
-        <button class="btn-secondary" onclick="showCollection()">BÓVEDA DE ARTE (<span id="col-count">0</span>)</button>
-    </div>
-
-    <div id="screen-auction" class="screen">
-        <div id="img-container"><div class="loader" id="auction-loader"></div><img id="item-img" src=""></div>
-        <h2 id="item-title" style="font-size: 1rem; color: var(--gold); margin: 15px 0;">Cargando...</h2>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-            <div><small style="color:#666">OFERTA</small><div id="ui-bid" style="font-size:1.8rem; font-weight:800;">$0</div></div>
-            <div id="ui-timer" style="font-size:2.5rem; font-weight:900; color:var(--red);">--</div>
-        </div>
-        <div id="bid-status" style="text-align:center; margin-bottom:15px; font-size:0.9rem; color:var(--gold)">---</div>
-        <button class="btn-main" onclick="makeBid()">PUJAR +$1,000</button>
-    </div>
-
-    <div id="screen-collection" class="screen">
-        <div class="header-title"><h1>MI BÓVEDA</h1></div>
-        <div id="gallery-content" class="museum-grid"></div>
-        <button class="btn-secondary" onclick="showScreen('screen-menu')" style="position:fixed; bottom:70px; width:calc(100% - 50px)">VOLVER</button>
-    </div>
-
-    <div id="sale-panel">
-        <div style="text-align: center;">
-            <h2 style="color:var(--gold)">VALUACIÓN</h2>
-            <div id="sale-offer" style="font-size: 2.5rem; font-weight: 800; margin: 20px 0; color: var(--green);">$0</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <button class="btn-main" id="confirm-sale-btn">VENDER</button>
-                <button class="btn-secondary" onclick="closeSalePanel()">CONSERVAR</button>
-            </div>
+    <div id="screen-login" class="screen active">
+        <div class="card-menu">
+            <h1 style="color:var(--gold); margin:0;">ELITE CARDS</h1>
+            <p style="opacity:0.7;">Club Multijugador</p>
+            <input type="text" id="player-nick" placeholder="Tu Apodo (Ej: ElGaucho)">
+            <button class="btn-main" onclick="entrarAlLobby()">ENTRAR AL CLUB</button>
         </div>
     </div>
 
-    <div id="ad-container" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #000; display: none; justify-content: center; z-index: 1000; padding: 5px 0; border-top: 1px solid var(--gold); height: 60px;">
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:320px;height:50px"
-             data-ad-client="ca-pub-1479705494159422"
-             data-ad-slot="XXXXXXXXXX"></ins>
-        <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+    <div id="screen-lobby" class="screen">
+        <h2 style="color:var(--gold);">Mesas Disponibles</h2>
+        <div id="rooms-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <p>Buscando jugadores...</p>
+        </div>
+        <button class="btn-main" style="position:fixed; bottom:30px; width:80%;" onclick="crearMesa()">CREAR NUEVA MESA</button>
     </div>
 
     <script>
-        const AudioEngine = {
-            ctx: null,
-            init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-            play(type) {
-                this.init();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                if(type === 'bid') { osc.frequency.setValueAtTime(600, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1); osc.start(); osc.stop(this.ctx.currentTime + 0.1); }
-                if(type === 'tick') { osc.frequency.setValueAtTime(400, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05); osc.start(); osc.stop(this.ctx.currentTime + 0.05); }
-                if(type === 'win') { osc.frequency.setValueAtTime(800, this.ctx.currentTime + 0.2); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5); osc.start(); osc.stop(this.ctx.currentTime + 0.5); }
-                if(type === 'cash') { osc.type = 'square'; osc.frequency.setValueAtTime(1200, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3); osc.start(); osc.stop(this.ctx.currentTime + 0.3); }
-                if(type === 'fail') { osc.frequency.setValueAtTime(150, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4); osc.start(); osc.stop(this.ctx.currentTime + 0.4); }
-            }
+        // TU CONFIGURACIÓN DE FIREBASE
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
+            authDomain: "grandauctioneer.firebaseapp.com",
+            projectId: "grandauctioneer",
+            databaseURL: "https://grandauctioneer-default-rtdb.firebaseio.com/", // Revisa que esta URL sea la de tu Realtime Database
+            storageBucket: "grandauctioneer.firebasestorage.app",
+            appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
         };
 
-        const firebaseConfig = { apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0", authDomain: "grandauctioneer.firebaseapp.com", projectId: "grandauctioneer", storageBucket: "grandauctioneer.firebasestorage.app", messagingSenderId: "779568791424", appId: "1:779568791424:web:c71c5fd48c541755ed0b65" };
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const db = firebase.database();
+        let miNombre = "";
 
-        const RIVALES = ["Magnate Suizo", "Barón von Art", "Jeque Dubái", "Inversor NY"];
-        let state = { name: "", balance: 25000, currentBid: 0, timer: 12, interval: null, leader: "", collection: [] };
-
-        async function login() {
-            const nameInput = document.getElementById('player-name').value.trim();
-            if(!nameInput) return alert("Ingresa tu nombre");
-            state.name = nameInput;
-            AudioEngine.init();
-            const btn = document.getElementById('login-btn');
-            btn.disabled = true; btn.innerText = "CARGANDO BÓVEDA...";
-            try {
-                const doc = await db.collection("leaderboard").doc(state.name).get();
-                if(doc.exists) {
-                    const data = doc.data();
-                    state.balance = data.balance || 25000;
-                    state.collection = data.collection || [];
-                } else {
-                    await sync();
-                }
-                showScreen('screen-menu');
-            } catch(e) {
-                alert("Error de conexión. Modo local.");
-                showScreen('screen-menu');
-            } finally {
-                btn.disabled = false; btn.innerText = "INGRESAR AL CLUB";
-            }
-        }
-
-        function showScreen(id) {
+        function cambiarPantalla(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            const ad = document.getElementById('ad-container');
-            if(id === 'screen-menu' || id === 'screen-collection') ad.style.display = 'flex';
-            else ad.style.display = 'none';
-            updateUI();
         }
 
-        function updateUI() {
-            document.getElementById('ui-bal').innerText = "$" + state.balance.toLocaleString();
-            document.getElementById('col-count').innerText = state.collection.length;
+        function entrarAlLobby() {
+            miNombre = document.getElementById('player-nick').value.trim();
+            if(miNombre.length < 3) return alert("Nombre muy corto");
+            cambiarPantalla('screen-lobby');
+            escucharMesas();
         }
 
-        async function startAuction() {
-            showScreen('screen-auction');
-            const title = document.getElementById('item-title');
-            const img = document.getElementById('item-img');
-            const loader = document.getElementById('auction-loader');
-            clearInterval(state.interval);
-            img.style.opacity = "0"; loader.style.display = "block";
-            title.innerText = "Localizando obra...";
-            let finalImg = `https://picsum.photos/seed/${Math.random()}/400/300`;
-            try {
-                const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=painting');
-                const d = await r.json();
-                const obj = await (await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${d.objectIDs[Math.floor(Math.random()*100)]}`)).json();
-                if(obj.primaryImageSmall) { finalImg = obj.primaryImageSmall; title.innerText = obj.title; }
-            } catch(e) {}
-            img.src = finalImg;
-            img.onload = () => { img.style.opacity = "1"; loader.style.display = "none"; state.currentArtImg = finalImg; iniciarReloj(); };
+        function crearMesa() {
+            const mesaID = "Mesa-" + Math.floor(1000 + Math.random() * 9000);
+            db.ref('mesas/' + mesaID).set({
+                creador: miNombre,
+                estado: "esperando",
+                jugadores: 1,
+                juego: "Truco"
+            });
+            alert("Mesa creada: " + mesaID + ". Esperando oponente...");
         }
 
-        function iniciarReloj() {
-            state.currentBid = Math.floor(Math.random() * 5000) + 5000;
-            state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
-            state.timer = 12;
-            state.interval = setInterval(() => {
-                state.timer--;
-                document.getElementById('ui-timer').innerText = state.timer;
-                document.getElementById('ui-bid').innerText = "$" + state.currentBid.toLocaleString();
-                document.getElementById('bid-status').innerText = "LÍDER: " + state.leader;
-                if(state.timer <= 3 && state.timer > 0) AudioEngine.play('tick');
-                if(state.timer > 1 && Math.random() > 0.8 && state.leader === state.name) {
-                    state.currentBid += 1000; state.leader = RIVALES[Math.floor(Math.random()*RIVALES.length)];
-                    AudioEngine.play('bid');
+        function escucharMesas() {
+            db.ref('mesas').on('value', (snapshot) => {
+                const container = document.getElementById('rooms-container');
+                container.innerHTML = "";
+                const mesas = snapshot.val();
+                if(mesas) {
+                    Object.keys(mesas).forEach(id => {
+                        const m = mesas[id];
+                        container.innerHTML += `
+                            <div class="room-card">
+                                <span><b>${id}</b><br><small>Host: ${m.creador}</small></span>
+                                <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="unirse('${id}')">UNIRSE</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = "<p>No hay mesas. ¡Crea la primera!</p>";
                 }
-                if(state.timer <= 0) { clearInterval(state.interval); terminar(); }
-            }, 1000);
+            });
         }
 
-        function makeBid() { if(state.balance >= state.currentBid + 1000){ state.currentBid += 1000; state.leader = state.name; AudioEngine.play('bid'); } }
-
-        async function terminar() {
-            if(state.leader === state.name) {
-                AudioEngine.play('win');
-                state.balance -= state.currentBid;
-                state.collection.push({ img: state.currentArtImg, cost: state.currentBid });
-                alert("¡OBRA ADQUIRIDA!");
-            } else {
-                AudioEngine.play('fail');
-                alert("SUBASTA FINALIZADA");
-            }
-            await sync();
-            showScreen('screen-menu');
+        function unirse(id) {
+            alert("Te has unido a la mesa: " + id);
+            // Aquí irá la lógica de pasar a la pantalla de juego
         }
-
-        function showCollection() {
-            showScreen('screen-collection');
-            document.getElementById('gallery-content').innerHTML = state.collection.map((art, i) => `
-                <div class="art-card" onclick="openSale(${i})"><img src="${art.img}"><div class="price-tag">$${art.cost.toLocaleString()}</div></div>
-            `).join('') || "<p style='grid-column:1/3;text-align:center'>Bóveda vacía</p>";
-        }
-
-        function openSale(i) {
-            const art = state.collection[i];
-            const offer = Math.floor(art.cost * (0.8 + Math.random()));
-            document.getElementById('sale-offer').innerText = "$" + offer.toLocaleString();
-            document.getElementById('confirm-sale-btn').onclick = async () => {
-                AudioEngine.play('cash');
-                state.balance += offer;
-                state.collection.splice(i, 1);
-                closeSalePanel();
-                await sync();
-                showCollection();
-            };
-            document.getElementById('sale-panel').classList.add('panel-open');
-        }
-
-        function closeSalePanel() { document.getElementById('sale-panel').classList.remove('panel-open'); }
-        async function sync() { updateUI(); try { await db.collection("leaderboard").doc(state.name).set({ name: state.name, balance: state.balance, collection: state.collection }, { merge: true }); } catch(e) {} }
     </script>
 </body>
 </html>
