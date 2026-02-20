@@ -3,80 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | Multiplayer Pro</title>
+    <title>Elite Cards | Battle Mode</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { 
-            --gold: #d4af37; 
-            --felt: #0a5c36; 
-            --oro: #b8860b;
-            --copa: #d32f2f;
-            --espada: #1976d2;
-            --basto: #388e3c;
-        }
-        
-        body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
+        :root { --gold: #d4af37; --felt: #0a5c36; --oro: #b8860b; --copa: #d32f2f; --espada: #1976d2; --basto: #388e3c; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .active { display: flex; }
 
-        /* Login y Lobby */
+        /* Estilo General */
         .card-menu { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 80%; max-width: 350px; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
-        .btn-main { background: linear-gradient(135deg, var(--gold), #f7e0a1); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        .btn-main { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; }
 
-        /* Mesa de Juego */
+        /* Mesa y Marcador */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
+        .scoreboard { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; }
         
-        .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; z-index: 10; }
-        
-        /* ESTILO DE LAS CARTAS */
+        .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; }
         .card { 
-            width: 80px; height: 120px; background: white; border-radius: 10px; color: black;
+            width: 75px; height: 110px; background: white; border-radius: 8px; color: black;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 3px solid #333; box-shadow: 0 6px 12px rgba(0,0,0,0.5);
-            cursor: pointer; transition: transform 0.2s; position: relative;
+            font-weight: bold; border: 3px solid #333; cursor: pointer; position: relative;
         }
-        .card:active { transform: scale(0.9); }
-        
-        .card .value { font-size: 1.8rem; line-height: 1; }
-        .card .suit { font-size: 1.4rem; margin-top: 5px; }
-
-        /* Colores dinámicos por palo */
         .card[data-palo="Oros"] { color: var(--oro); border-color: var(--oro); }
         .card[data-palo="Copas"] { color: var(--copa); border-color: var(--copa); }
         .card[data-palo="Espadas"] { color: var(--espada); border-color: var(--espada); }
         .card[data-palo="Bastos"] { color: var(--basto); border-color: var(--basto); }
 
-        #played-area { 
-            width: 90%; height: 180px; border: 2px dashed rgba(255,255,255,0.1); 
-            border-radius: 20px; display: flex; justify-content: center; align-items: center; gap: 15px;
-        }
-
-        .status-msg { position: absolute; top: 80px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 30px; font-size: 0.9rem; border: 1px solid var(--gold); }
+        #played-area { width: 90%; height: 150px; display: flex; justify-content: center; align-items: center; gap: 15px; }
+        .status-msg { position: absolute; top: 80px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 30px; font-size: 0.8rem; border: 1px solid var(--gold); }
     </style>
 </head>
 <body>
 
     <div id="screen-login" class="screen active">
         <div class="card-menu">
-            <h1 style="color:var(--gold); margin:0;">ELITE CARDS</h1>
-            <p style="font-size: 0.8rem; opacity: 0.7;">PRO MULTIPLAYER</p>
+            <h1 style="color:var(--gold)">ELITE CARDS</h1>
             <input type="text" id="player-nick" placeholder="Tu Apodo">
-            <button class="btn-main" onclick="entrar()">ENTRAR AL CLUB</button>
+            <button class="btn-main" onclick="entrar()">ENTRAR</button>
         </div>
     </div>
 
     <div id="screen-lobby" class="screen">
-        <h2 style="color:var(--gold)">Mesas Disponibles</h2>
-        <div id="rooms-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px;"></div>
-        <button class="btn-main" style="width:70%; margin-top:30px;" onclick="crearMesa()">+ CREAR MESA</button>
+        <h2 style="color:var(--gold)">Lobby Multijugador</h2>
+        <div id="rooms-container"></div>
+        <button class="btn-main" style="width:70%; margin-top:20px;" onclick="crearMesa()">CREAR MESA</button>
     </div>
 
     <div id="screen-game" class="screen">
+        <div class="scoreboard">
+            NOSOTROS: <span id="score-mine">0</span><br>
+            ELLOS: <span id="score-theirs">0</span>
+        </div>
         <div id="turn-indicator" class="status-msg">Esperando...</div>
         <div id="played-area"></div>
         <div class="hand" id="my-hand"></div>
@@ -91,12 +73,23 @@
             storageBucket: "grandauctioneer.firebasestorage.app",
             appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
         let miNombre = "", miMano = [], mesaID = null, miRol = "";
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
+
+        // JERARQUÍA DE PODER (Estilo Truco simplificado)
+        function obtenerPoder(valor, palo) {
+            if (valor === 1 && palo === "Espadas") return 14; // El Ancho de Espadas
+            if (valor === 1 && palo === "Bastos") return 13;  // El Ancho de Bastos
+            if (valor === 7 && palo === "Espadas") return 12;
+            if (valor === 7 && palo === "Oros") return 11;
+            if (valor === 3) return 10;
+            if (valor === 2) return 9;
+            if (valor === 1) return 8;
+            return valor; // Los demás valen su número
+        }
 
         function entrar() {
             miNombre = document.getElementById('player-nick').value.trim();
@@ -109,9 +102,10 @@
 
         function crearMesa() {
             const id = "Mesa-" + Math.floor(Math.random()*9000);
-            const mazo = barajar(generarMazo());
+            const mazo = generarMazo().sort(() => Math.random() - 0.5);
             db.ref('mesas/' + id).set({
-                host: miNombre, invitado: "", mazo: mazo, turno: miNombre, estado: "esperando", cartasTiradas: []
+                host: miNombre, invitado: "", mazo: mazo, turno: miNombre, estado: "esperando", 
+                cartasTiradas: [], puntosHost: 0, puntosInvitado: 0
             }).then(() => unirse(id));
         }
 
@@ -123,7 +117,7 @@
                 if(mesas) {
                     Object.keys(mesas).forEach(id => {
                         if(mesas[id].estado === "esperando") {
-                            container.innerHTML += `<div class="card-menu" style="padding:15px; width:80%; margin:0;"><p style="margin:5px">${mesas[id].host}</p><button class="btn-main" onclick="unirse('${id}')">UNIRSE</button></div>`;
+                            container.innerHTML += `<button class="btn-main" style="margin:5px" onclick="unirse('${id}')">Unirse a ${mesas[id].host}</button>`;
                         }
                     });
                 }
@@ -152,11 +146,39 @@
                     renderHand();
                 }
 
+                // Actualizar Marcador
+                document.getElementById('score-mine').innerText = (miRol === "host") ? mesa.puntosHost : mesa.puntosInvitado;
+                document.getElementById('score-theirs').innerText = (miRol === "host") ? mesa.puntosInvitado : mesa.puntosHost;
+
                 const tInd = document.getElementById('turn-indicator');
-                tInd.innerText = (mesa.turno === miNombre) ? "TU TURNO" : "TURNO DE: " + mesa.turno;
-                tInd.style.border = (mesa.turno === miNombre) ? "2px solid var(--gold)" : "1px solid #666";
+                tInd.innerText = (mesa.turno === miNombre) ? "TU TURNO" : "ESPERANDO A " + mesa.turno;
 
                 renderTable(mesa.cartasTiradas || []);
+
+                // LÓGICA DE GANADOR DE RONDA
+                if(mesa.cartasTiradas && mesa.cartasTiradas.length === 2) {
+                    setTimeout(() => evaluarGanadorRonda(mesa), 2000);
+                }
+            });
+        }
+
+        function evaluarGanadorRonda(mesa) {
+            if(miRol !== "host") return; // Solo el host calcula para evitar conflictos
+
+            const c1 = mesa.cartasTiradas[0];
+            const c2 = mesa.cartasTiradas[1];
+            const p1 = obtenerPoder(c1.carta.valor, c1.carta.palo);
+            const p2 = obtenerPoder(c2.carta.valor, c2.carta.palo);
+
+            let ganador = (p1 >= p2) ? c1.jugador : c2.jugador;
+            let pHost = mesa.puntosHost + (ganador === mesa.host ? 1 : 0);
+            let pInv = mesa.puntosInvitado + (ganador === mesa.invitado ? 1 : 0);
+
+            db.ref('mesas/' + mesaID).update({
+                cartasTiradas: [],
+                turno: ganador, // El que gana la mano, empieza la siguiente
+                puntosHost: pHost,
+                puntosInvitado: pInv
             });
         }
 
@@ -167,7 +189,7 @@
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card';
                 cardDiv.setAttribute('data-palo', c.palo);
-                cardDiv.innerHTML = `<div class="value">${c.valor}</div><div class="suit">${ICONOS[c.palo]}</div>`;
+                cardDiv.innerHTML = `<div>${c.valor}</div><div>${ICONOS[c.palo]}</div>`;
                 cardDiv.onclick = () => tirarCarta(i);
                 container.appendChild(cardDiv);
             });
@@ -176,14 +198,13 @@
         function tirarCarta(index) {
             db.ref('mesas/' + mesaID).once('value', snap => {
                 const mesa = snap.val();
-                if(mesa.turno !== miNombre) return;
+                if(mesa.turno !== miNombre || (mesa.cartasTiradas && mesa.cartasTiradas.length >= 2)) return;
 
                 const carta = miMano.splice(index, 1)[0];
                 const tiradas = mesa.cartasTiradas || [];
                 tiradas.push({ jugador: miNombre, carta: carta });
 
                 const siguienteTurno = (miRol === "host") ? (mesa.invitado || miNombre) : mesa.host;
-
                 db.ref('mesas/' + mesaID).update({ cartasTiradas: tiradas, turno: siguienteTurno });
                 renderHand();
             });
@@ -193,23 +214,15 @@
             const area = document.getElementById('played-area');
             area.innerHTML = "";
             tiradas.forEach(t => {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card';
-                cardDiv.setAttribute('data-palo', t.carta.palo);
-                cardDiv.style.cursor = "default";
-                cardDiv.innerHTML = `<div class="value">${t.carta.valor}</div><div class="suit">${ICONOS[t.carta.palo]}</div><small style="font-size:10px">${t.jugador}</small>`;
-                area.appendChild(cardDiv);
+                area.innerHTML += `<div class="card" data-palo="${t.carta.palo}" style="cursor:default"><div>${t.carta.valor}</div><div>${ICONOS[t.carta.palo]}</div><small style="font-size:8px">${t.jugador}</small></div>`;
             });
         }
 
         function generarMazo() {
-            const palos = ["Oros", "Copas", "Espadas", "Bastos"];
-            const mazo = [];
-            palos.forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => mazo.push({valor:v, palo:p})));
-            return mazo;
+            const m = [];
+            ["Oros", "Copas", "Espadas", "Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => m.push({valor:v, palo:p})));
+            return m;
         }
-
-        function barajar(m) { return m.sort(() => Math.random() - 0.5); }
     </script>
 </body>
 </html>
