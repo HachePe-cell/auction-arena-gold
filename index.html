@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | IA & Battle Mode</title>
+    <title>Elite Cards | Fix & Battle</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -14,20 +14,18 @@
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .active { display: flex; }
 
-        /* Estilo Menú */
         .card-menu { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 85%; max-width: 350px; }
         .btn-main { background: linear-gradient(135deg, var(--gold), #f7e0a1); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 8px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #eee; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #eee; color: #000; font-size: 16px; }
 
-        /* Mesa y Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
-        .scoreboard { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; z-index: 50; }
+        .scoreboard { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; z-index: 100; }
         
-        .hand { display: flex; gap: 8px; position: absolute; bottom: 25px; }
+        .hand { display: flex; gap: 8px; position: absolute; bottom: 25px; z-index: 10; }
         .card { 
             width: 70px; height: 105px; background: white; border-radius: 8px; color: black;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 3px solid #333; cursor: pointer; transition: 0.2s;
+            font-weight: bold; border: 3px solid #333; cursor: pointer;
         }
         .card[data-palo="Oros"] { color: var(--oro); border-color: var(--oro); }
         .card[data-palo="Copas"] { color: var(--copa); border-color: var(--copa); }
@@ -35,7 +33,7 @@
         .card[data-palo="Bastos"] { color: var(--basto); border-color: var(--basto); }
 
         #played-area { width: 100%; height: 140px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .msg { position: absolute; top: 85px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: var(--gold); }
+        .msg { position: absolute; top: 85px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: var(--gold); text-align: center; width: 60%; }
     </style>
 </head>
 <body>
@@ -44,24 +42,27 @@
         <div class="card-menu">
             <h1 style="color:var(--gold); margin:0;">ELITE CARDS</h1>
             <input type="text" id="player-nick" placeholder="Tu Apodo">
-            
-            <p style="margin-bottom:5px;">Dificultad de la IA:</p>
+            <p style="margin: 5px 0;">Dificultad BOT:</p>
             <select id="bot-difficulty">
-                <option value="easy">Fácil (Azar)</option>
-                <option value="medium">Media (Estratega)</option>
-                <option value="hard">Difícil (Maestro)</option>
+                <option value="easy">Fácil</option>
+                <option value="hard">Difícil</option>
             </select>
-
-            <button class="btn-main" onclick="entrar(false)">Jugar contra BOT 🤖</button>
-            <button class="btn-main" style="background:#444; color:white;" onclick="entrar(true)">Multijugador 👥</button>
+            <button class="btn-main" onclick="iniciarModoBot()">JUGAR CONTRA BOT 🤖</button>
+            <button class="btn-main" style="background:#333; color:white;" onclick="activarLobby()">MULTIJUGADOR 👥</button>
         </div>
+    </div>
+
+    <div id="screen-lobby" class="screen">
+        <h2 style="color:var(--gold)">Salas Disponibles</h2>
+        <div id="rooms-container" style="width:90%"></div>
+        <button class="btn-main" onclick="crearMesaMulti()" style="width:80%; margin-top:20px;">+ CREAR MESA</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="scoreboard">
             TÚ: <span id="score-mine">0</span><br>
             RIVAL: <span id="score-theirs">0</span><br>
-            META: 15 PTS
+            META: 15
         </div>
         <div id="turn-indicator" class="msg">Tu turno</div>
         <div id="played-area"></div>
@@ -69,22 +70,20 @@
     </div>
 
     <script>
-        // CONFIG FIREBASE (Mantén la tuya)
+        // CONFIG FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
             projectId: "grandauctioneer",
             databaseURL: "https://grandauctioneer-default-rtdb.firebaseio.com/", 
-            storageBucket: "grandauctioneer.firebasestorage.app",
             appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let miNombre = "", miMano = [], manoBot = [], mesaID = null;
-        let esMultijugador = false, miRol = "host", dificultad = "easy";
+        let miNombre = "", miMano = [], manoBot = [], mesaData = null;
+        let esMultijugador = false;
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
-        const PUNTAJE_MAXIMO = 15;
 
         function obtenerPoder(v, p) {
             if (v === 1 && p === "Espadas") return 14;
@@ -95,130 +94,133 @@
             return v;
         }
 
-        function entrar(multi) {
-            miNombre = document.getElementById('player-nick').value || "Jugador";
-            dificultad = document.getElementById('bot-difficulty').value;
-            esMultijugador = multi;
-            
-            document.getElementById('screen-login').style.display = 'none';
-            document.getElementById('screen-game').style.display = 'flex';
-
-            if(!esMultijugador) iniciarModoBot();
-        }
-
-        // --- LÓGICA DEL BOT ---
+        // --- MODO BOT ---
         function iniciarModoBot() {
+            miNombre = document.getElementById('player-nick').value || "Jugador";
+            esMultijugador = false;
+            cambiarPantalla('screen-game');
+            
             const mazo = generarMazo().sort(() => Math.random() - 0.5);
             miMano = [mazo[0], mazo[2], mazo[4]];
             manoBot = [mazo[1], mazo[3], mazo[5]];
             
-            const mesaSimulada = {
+            mesaData = {
                 host: miNombre, invitado: "Bot 🤖", turno: miNombre,
-                puntosHost: 0, puntosInvitado: 0, cartasTiradas: []
+                puntosHost: 0, puntosInvitado: 0, cartasTiradas: [], mazo: mazo
             };
-            
-            actualizarInterfazBot(mesaSimulada);
+            actualizarUI();
         }
 
-        function actualizarInterfazBot(mesa) {
-            if(mesa.puntosHost >= PUNTAJE_MAXIMO || mesa.puntosInvitado >= PUNTAJE_MAXIMO) {
-                alert("FIN DEL JUEGO. Ganador: " + (mesa.puntosHost >= PUNTAJE_MAXIMO ? miNombre : "Bot"));
-                location.reload(); return;
-            }
-
-            document.getElementById('score-mine').innerText = mesa.puntosHost;
-            document.getElementById('score-theirs').innerText = mesa.puntosInvitado;
-            document.getElementById('turn-indicator').innerText = mesa.turno === miNombre ? "TU TURNO" : "Bot pensando...";
-            
-            renderHand();
-            renderTable(mesa.cartasTiradas);
-
-            if(mesa.turno !== miNombre) {
-                setTimeout(() => botJuega(mesa), 1500);
-            }
-        }
-
-        function botJuega(mesa) {
+        function botDecision() {
+            const dif = document.getElementById('bot-difficulty').value;
             let index = 0;
-            // Dificultad Selectiva
-            if(dificultad === "easy") {
+            if(dif === "easy") {
                 index = Math.floor(Math.random() * manoBot.length);
             } else {
-                // Media/Dura: Busca su carta con más poder
+                // Elige la carta más fuerte
                 manoBot.sort((a,b) => obtenerPoder(b.valor, b.palo) - obtenerPoder(a.valor, a.palo));
-                index = (dificultad === "hard") ? 0 : Math.floor(manoBot.length / 2);
             }
-
             const carta = manoBot.splice(index, 1)[0];
-            mesa.cartasTiradas.push({ jugador: "Bot 🤖", carta: carta });
-            mesa.turno = miNombre;
-
-            evaluarRondaLocal(mesa);
+            mesaData.cartasTiradas.push({ jugador: "Bot 🤖", carta: carta });
+            mesaData.turno = miNombre;
+            actualizarUI();
+            verificarRonda();
         }
 
-        function evaluarRondaLocal(mesa) {
-            if(mesa.cartasTiradas.length === 2) {
-                renderTable(mesa.cartasTiradas);
-                setTimeout(() => {
-                    const p1 = obtenerPoder(mesa.cartasTiradas[0].carta.valor, mesa.cartasTiradas[0].carta.palo);
-                    const p2 = obtenerPoder(mesa.cartasTiradas[1].carta.valor, mesa.cartasTiradas[1].carta.palo);
-                    
-                    const ganador = (p1 >= p2) ? mesa.cartasTiradas[0].jugador : mesa.cartasTiradas[1].jugador;
-                    if(ganador === miNombre) mesa.puntosHost++; else mesa.puntosInvitado++;
-                    
-                    mesa.cartasTiradas = [];
-                    mesa.turno = ganador;
+        function tirarCarta(index) {
+            if(mesaData.turno !== miNombre || mesaData.cartasTiradas.length >= 2) return;
+            
+            const carta = miMano.splice(index, 1)[0];
+            mesaData.cartasTiradas.push({ jugador: miNombre, carta: carta });
+            mesaData.turno = "Bot 🤖";
+            
+            actualizarUI();
+            verificarRonda();
+        }
 
-                    if(miMano.length === 0 && manoBot.length === 0) {
+        function verificarRonda() {
+            if(mesaData.cartasTiradas.length === 2) {
+                setTimeout(() => {
+                    const c1 = mesaData.cartasTiradas[0];
+                    const c2 = mesaData.cartasTiradas[1];
+                    const p1 = obtenerPoder(c1.carta.valor, c1.carta.palo);
+                    const p2 = obtenerPoder(c2.carta.valor, c2.carta.palo);
+                    
+                    const ganador = (p1 >= p2) ? c1.jugador : c2.jugador;
+                    if(ganador === miNombre) mesaData.puntosHost++; else mesaData.puntosInvitado++;
+                    
+                    mesaData.cartasTiradas = [];
+                    mesaData.turno = ganador;
+
+                    // Repartir si se acaban
+                    if(miMano.length === 0) {
                         const mazo = generarMazo().sort(() => Math.random() - 0.5);
                         miMano = [mazo[0], mazo[2], mazo[4]];
                         manoBot = [mazo[1], mazo[3], mazo[5]];
                     }
-                    actualizarInterfazBot(mesa);
-                }, 1500);
-            } else {
-                actualizarInterfazBot(mesa);
+
+                    if(mesaData.puntosHost >= 15 || mesaData.puntosInvitado >= 15) {
+                        alert("GANADOR: " + (mesaData.puntosHost >= 15 ? miNombre : "Bot 🤖"));
+                        location.reload();
+                    }
+                    actualizarUI();
+                }, 1200);
+            } else if(mesaData.turno === "Bot 🤖") {
+                setTimeout(botDecision, 1000);
             }
         }
 
-        // --- FUNCIONES DE RENDER --- (Compartidas)
-        function renderHand() {
-            const container = document.getElementById('my-hand');
-            container.innerHTML = "";
+        function actualizarUI() {
+            document.getElementById('score-mine').innerText = mesaData.puntosHost;
+            document.getElementById('score-theirs').innerText = mesaData.puntosInvitado;
+            document.getElementById('turn-indicator').innerText = (mesaData.turno === miNombre) ? "TU TURNO" : "TURNO DE BOT...";
+            
+            // Render Mano
+            const handCont = document.getElementById('my-hand');
+            handCont.innerHTML = "";
             miMano.forEach((c, i) => {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card';
-                cardDiv.setAttribute('data-palo', c.palo);
-                cardDiv.innerHTML = `<div>${c.valor}</div><div>${ICONOS[c.palo]}</div>`;
-                cardDiv.onclick = () => {
-                    // Si es turno del jugador
-                    miMano.splice(i, 1);
-                    // Aquí iría la lógica de tirar para el bot o multijugador
-                    // Por brevedad, simulamos la tirada en modo BOT:
-                    const mesaSim = {
-                        host: miNombre, invitado: "Bot 🤖", turno: "Bot 🤖",
-                        puntosHost: parseInt(document.getElementById('score-mine').innerText),
-                        puntosInvitado: parseInt(document.getElementById('score-theirs').innerText),
-                        cartasTiradas: [{jugador: miNombre, carta: c}]
-                    };
-                    evaluarRondaLocal(mesaSim);
-                };
-                container.appendChild(cardDiv);
+                const d = document.createElement('div');
+                d.className = 'card'; d.setAttribute('data-palo', c.palo);
+                d.innerHTML = `<div>${c.valor}</div><div>${ICONOS[c.palo]}</div>`;
+                d.onclick = () => tirarCarta(i);
+                handCont.appendChild(d);
+            });
+
+            // Render Mesa
+            const tableCont = document.getElementById('played-area');
+            tableCont.innerHTML = "";
+            mesaData.cartasTiradas.forEach(t => {
+                tableCont.innerHTML += `<div class="card" data-palo="${t.carta.palo}" style="cursor:default"><div>${t.carta.valor}</div><div>${ICONOS[t.carta.palo]}</div></div>`;
             });
         }
 
-        function renderTable(tiradas) {
-            const area = document.getElementById('played-area');
-            area.innerHTML = "";
-            tiradas.forEach(t => {
-                area.innerHTML += `<div class="card" data-palo="${t.carta.palo}" style="cursor:default"><div>${t.carta.valor}</div><div>${ICONOS[t.carta.palo]}</div></div>`;
-            });
+        // --- HELPER FUNCTIONS ---
+        function cambiarPantalla(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
         function generarMazo() {
             const m = [];
             ["Oros", "Copas", "Espadas", "Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => m.push({valor:v, palo:p})));
             return m;
+        }
+
+        function activarLobby() {
+            miNombre = document.getElementById('player-nick').value || "Jugador";
+            cambiarPantalla('screen-lobby');
+            db.ref('mesas').on('value', snap => {
+                const cont = document.getElementById('rooms-container');
+                cont.innerHTML = "";
+                const mesas = snap.val();
+                if(mesas) {
+                    Object.keys(mesas).forEach(id => {
+                        if(mesas[id].estado === "esperando") {
+                            cont.innerHTML += `<button class="btn-main" onclick="alert('Conectando...')">${mesas[id].host}</button>`;
+                        }
+                    });
+                }
+            });
         }
     </script>
 </body>
