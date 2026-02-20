@@ -9,10 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        /* Diseño "App-First" (Pensado para móviles) */
         :root {
             --gold: #d4af37;
-            --dark-green: #0a3d2e;
+            --felt: #0a5c36;
             --wood: #2c1b12;
         }
 
@@ -20,10 +19,9 @@
             margin: 0; padding: 0; height: 100%;
             background-color: #121212;
             color: white; font-family: 'Segoe UI', sans-serif;
-            overflow: hidden; /* Evita que la pantalla rebote */
+            overflow: hidden;
         }
 
-        /* Pantallas */
         .screen {
             position: absolute; width: 100%; height: 100%;
             display: none; flex-direction: column;
@@ -32,7 +30,6 @@
 
         .active { display: flex; }
 
-        /* Estilo del Menú */
         .card-menu {
             background: rgba(255, 255, 255, 0.05);
             padding: 40px 20px; border-radius: 25px;
@@ -43,7 +40,7 @@
         input {
             width: 100%; padding: 15px; margin: 20px 0;
             border-radius: 12px; border: none; font-size: 1rem;
-            box-sizing: border-box; background: #eee;
+            box-sizing: border-box; background: #eee; color: #000;
         }
 
         .btn-main {
@@ -51,99 +48,43 @@
             color: #000; border: none; padding: 15px 40px;
             border-radius: 12px; font-weight: bold;
             font-size: 1.1rem; cursor: pointer; width: 100%;
+            text-transform: uppercase;
         }
 
-        /* Lobby de Salas */
+        /* Lobby */
         .room-card {
             background: #1e1e1e; padding: 15px; border-radius: 12px;
             margin: 10px 0; width: 90%; display: flex;
             justify-content: space-between; align-items: center;
             border-left: 5px solid var(--gold);
         }
+
+        /* MESA DE JUEGO */
+        #screen-game {
+            background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%);
+        }
+
+        .hand {
+            display: flex; gap: 10px; position: absolute; bottom: 20px;
+        }
+
+        .card {
+            width: 80px; height: 120px;
+            background: white; border-radius: 8px;
+            color: black; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-weight: bold; border: 2px solid #000;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            font-size: 0.8rem; text-align: center;
+        }
+
+        .card.oro { color: #b8860b; }
+        .card.espada { color: #2f4f4f; }
+        .card.basto { color: #4b2c20; }
+        .card.copa { color: #8b0000; }
     </style>
 </head>
 <body>
 
     <div id="screen-login" class="screen active">
-        <div class="card-menu">
-            <h1 style="color:var(--gold); margin:0;">ELITE CARDS</h1>
-            <p style="opacity:0.7;">Club Multijugador</p>
-            <input type="text" id="player-nick" placeholder="Tu Apodo (Ej: ElGaucho)">
-            <button class="btn-main" onclick="entrarAlLobby()">ENTRAR AL CLUB</button>
-        </div>
-    </div>
-
-    <div id="screen-lobby" class="screen">
-        <h2 style="color:var(--gold);">Mesas Disponibles</h2>
-        <div id="rooms-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-            <p>Buscando jugadores...</p>
-        </div>
-        <button class="btn-main" style="position:fixed; bottom:30px; width:80%;" onclick="crearMesa()">CREAR NUEVA MESA</button>
-    </div>
-
-    <script>
-        // TU CONFIGURACIÓN DE FIREBASE
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
-            authDomain: "grandauctioneer.firebaseapp.com",
-            projectId: "grandauctioneer",
-            databaseURL: "https://grandauctioneer-default-rtdb.firebaseio.com/", // Revisa que esta URL sea la de tu Realtime Database
-            storageBucket: "grandauctioneer.firebasestorage.app",
-            appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let miNombre = "";
-
-        function cambiarPantalla(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        function entrarAlLobby() {
-            miNombre = document.getElementById('player-nick').value.trim();
-            if(miNombre.length < 3) return alert("Nombre muy corto");
-            cambiarPantalla('screen-lobby');
-            escucharMesas();
-        }
-
-        function crearMesa() {
-            const mesaID = "Mesa-" + Math.floor(1000 + Math.random() * 9000);
-            db.ref('mesas/' + mesaID).set({
-                creador: miNombre,
-                estado: "esperando",
-                jugadores: 1,
-                juego: "Truco"
-            });
-            alert("Mesa creada: " + mesaID + ". Esperando oponente...");
-        }
-
-        function escucharMesas() {
-            db.ref('mesas').on('value', (snapshot) => {
-                const container = document.getElementById('rooms-container');
-                container.innerHTML = "";
-                const mesas = snapshot.val();
-                if(mesas) {
-                    Object.keys(mesas).forEach(id => {
-                        const m = mesas[id];
-                        container.innerHTML += `
-                            <div class="room-card">
-                                <span><b>${id}</b><br><small>Host: ${m.creador}</small></span>
-                                <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="unirse('${id}')">UNIRSE</button>
-                            </div>
-                        `;
-                    });
-                } else {
-                    container.innerHTML = "<p>No hay mesas. ¡Crea la primera!</p>";
-                }
-            });
-        }
-
-        function unirse(id) {
-            alert("Te has unido a la mesa: " + id);
-            // Aquí irá la lógica de pasar a la pantalla de juego
-        }
-    </script>
-</body>
-</html>
+        <div
