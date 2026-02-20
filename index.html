@@ -9,193 +9,35 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --gold: #d4af37; --felt: #0a5c36; }
-        body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
+        :root { 
+            --gold: #d4af37; 
+            --felt: #0a5c36; 
+            --oro: #b8860b;
+            --copa: #d32f2f;
+            --espada: #1976d2;
+            --basto: #388e3c;
+        }
+        
+        body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .active { display: flex; }
 
-        /* Estilo Login y Lobby */
-        .card-menu { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 80%; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        .btn-main { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
+        /* Login y Lobby */
+        .card-menu { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 80%; max-width: 350px; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
+        .btn-main { background: linear-gradient(135deg, var(--gold), #f7e0a1); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
 
         /* Mesa de Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
         
         .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; z-index: 10; }
         
+        /* ESTILO DE LAS CARTAS */
         .card { 
-            width: 75px; height: 110px; background: white; border-radius: 8px; color: black;
+            width: 80px; height: 120px; background: white; border-radius: 10px; color: black;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 2px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            cursor: pointer; transition: transform 0.2s;
+            font-weight: bold; border: 3px solid #333; box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+            cursor: pointer; transition: transform 0.2s; position: relative;
         }
-        .card:hover { transform: translateY(-10px); }
-
-        #played-area { 
-            width: 250px; height: 150px; border: 2px dashed rgba(255,255,255,0.2); 
-            border-radius: 15px; display: flex; justify-content: center; align-items: center; gap: 10px;
-        }
-
-        .status-msg { position: absolute; top: 80px; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
-
-    <div id="screen-login" class="screen active">
-        <div class="card-menu">
-            <h1 style="color:var(--gold)">ELITE CARDS</h1>
-            <input type="text" id="player-nick" placeholder="Tu Apodo">
-            <button class="btn-main" onclick="entrar()">ENTRAR</button>
-        </div>
-    </div>
-
-    <div id="screen-lobby" class="screen">
-        <h2 style="color:var(--gold)">Salas</h2>
-        <div id="rooms-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
-        <button class="btn-main" style="width:70%; margin-top:20px;" onclick="crearMesa()">CREAR MESA</button>
-    </div>
-
-    <div id="screen-game" class="screen">
-        <div id="turn-indicator" class="status-msg">Cargando...</div>
-        
-        <div id="played-area">
-            </div>
-
-        <div class="hand" id="my-hand"></div>
-    </div>
-
-    <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
-            authDomain: "grandauctioneer.firebaseapp.com",
-            projectId: "grandauctioneer",
-            databaseURL: "https://grandauctioneer-default-rtdb.firebaseio.com/", 
-            storageBucket: "grandauctioneer.firebasestorage.app",
-            appId: "1:779568791424:web:c71c5fd48c541755ed0b65"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        
-        let miNombre = "", miMano = [], mesaID = null, miRol = "";
-
-        function entrar() {
-            miNombre = document.getElementById('player-nick').value.trim();
-            if(miNombre) {
-                document.getElementById('screen-login').style.display = 'none';
-                document.getElementById('screen-lobby').style.display = 'flex';
-                escucharMesas();
-            }
-        }
-
-        function crearMesa() {
-            const id = "Mesa-" + Math.floor(Math.random()*9000);
-            const mazo = barajar(generarMazo());
-            db.ref('mesas/' + id).set({
-                host: miNombre, invitado: "", mazo: mazo, turno: miNombre, estado: "esperando", cartasTiradas: []
-            }).then(() => unirse(id));
-        }
-
-        function escucharMesas() {
-            db.ref('mesas').on('value', snap => {
-                const container = document.getElementById('rooms-container');
-                container.innerHTML = "";
-                const mesas = snap.val();
-                if(mesas) {
-                    Object.keys(mesas).forEach(id => {
-                        if(mesas[id].estado === "esperando") {
-                            container.innerHTML += `<button class="btn-main" style="width:80%; margin:5px" onclick="unirse('${id}')">Unirse a ${mesas[id].host}</button>`;
-                        }
-                    });
-                }
-            });
-        }
-
-        function unirse(id) {
-            mesaID = id;
-            db.ref('mesas/'+id).once('value', snap => {
-                const mesa = snap.val();
-                miRol = (mesa.host === miNombre) ? "host" : "invitado";
-                if(miRol === "invitado") {
-                    db.ref('mesas/'+id).update({ invitado: miNombre, estado: "jugando" });
-                }
-                document.getElementById('screen-lobby').style.display = 'none';
-                document.getElementById('screen-game').style.display = 'flex';
-                gestionarPartida();
-            });
-        }
-
-        function gestionarPartida() {
-            db.ref('mesas/' + mesaID).on('value', snap => {
-                const mesa = snap.val();
-                if(!mesa) return;
-
-                // Repartir si no hay cartas
-                if(mesa.estado === "jugando" && miMano.length === 0) {
-                    miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
-                    renderHand();
-                }
-
-                // Actualizar turno
-                const tInd = document.getElementById('turn-indicator');
-                tInd.innerText = (mesa.turno === miNombre) ? "TU TURNO" : "TURNO DE OPONENTE";
-                tInd.style.color = (mesa.turno === miNombre) ? "var(--gold)" : "white";
-
-                // Actualizar mesa
-                renderTable(mesa.cartasTiradas || []);
-            });
-        }
-
-        function renderHand() {
-            const container = document.getElementById('my-hand');
-            container.innerHTML = "";
-            miMano.forEach((c, i) => {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card';
-                cardDiv.innerHTML = `<span>${c.valor}</span><small>${c.palo}</small>`;
-                cardDiv.onclick = () => tirarCarta(i);
-                container.appendChild(cardDiv);
-            });
-        }
-
-        function tirarCarta(index) {
-            db.ref('mesas/' + mesaID).once('value', snap => {
-                const mesa = snap.val();
-                if(mesa.turno !== miNombre) return alert("No es tu turno");
-
-                const carta = miMano.splice(index, 1)[0];
-                const tiradas = mesa.cartasTiradas || [];
-                tiradas.push({ jugador: miNombre, carta: carta });
-
-                const siguienteTurno = (miRol === "host") ? mesa.invitado : mesa.host;
-
-                db.ref('mesas/' + mesaID).update({
-                    cartasTiradas: tiradas,
-                    turno: siguienteTurno
-                });
-
-                renderHand();
-            });
-        }
-
-        function renderTable(tiradas) {
-            const area = document.getElementById('played-area');
-            area.innerHTML = "";
-            tiradas.forEach(t => {
-                area.innerHTML += `<div class="card" style="cursor:default"><span>${t.carta.valor}</span><small>${t.carta.palo}</small></div>`;
-            });
-        }
-
-        function generarMazo() {
-            const palos = ["Oros", "Copas", "Espadas", "Bastos"];
-            const mazo = [];
-            palos.forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => mazo.push({valor:v, palo:p})));
-            return mazo;
-        }
-
-        function barajar(m) { return m.sort(() => Math.random() - 0.5); }
-    </script>
-</body>
-</html>
+        .card:active { transform: scale
