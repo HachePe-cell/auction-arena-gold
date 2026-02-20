@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | Ultimate Edition</title>
+    <title>Elite Cards | Final Verified</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; --white: #f0f0f0; }
+        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* Animación de Fondo */
+        /* Fondo Animado */
         .bg-animation { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle, #1a1a1a, #000); }
         .floating-card { position: absolute; opacity: 0.1; font-size: 40px; animation: float 15s linear infinite; bottom: -100px; color: var(--gold); }
         @keyframes float { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-110vh) rotate(360deg); } }
@@ -20,36 +20,28 @@
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .active { display: flex; }
 
-        /* Componentes de Interfaz */
+        /* UI Menú */
         .card-menu { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 350px; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
-        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.3s; }
-        .btn-main:hover { transform: scale(1.02); filter: brightness(1.2); }
+        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.2s; }
+        .btn-main:active { transform: scale(0.95); }
         .btn-secondary { background: #333; color: white; border: 1px solid var(--gold); }
-        
-        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; font-size: 16px; }
 
-        /* Ranking Modal */
-        #modal-ranking { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 350px; background: #1a1a1a; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; z-index: 1000; display: none; }
-        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
-
-        /* Tablero de Juego */
+        /* Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
-        .scoreboard { position: absolute; top: 15px; width: 92%; display: flex; justify-content: space-between; background: rgba(0,0,0,0.85); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); font-size: 12px; z-index: 100; }
-        
+        .scoreboard { position: absolute; top: 15px; width: 92%; display: flex; justify-content: space-between; background: rgba(0,0,0,0.85); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); font-size: 11px; z-index: 100; }
         .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; }
-        .card { 
-            width: 75px; height: 110px; background: white; border-radius: 8px; color: black;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 3px solid #333; cursor: pointer; transition: 0.3s;
-        }
-        .card.in-table { animation: deal 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes deal { from { transform: translateY(150px) rotate(20deg); opacity: 0; } to { transform: translateY(0) rotate(0deg); opacity: 1; } }
+        .card { width: 75px; height: 110px; background: white; border-radius: 8px; color: black; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #333; cursor: pointer; position: relative; }
+        .card.in-table { animation: deal 0.4s ease-out forwards; }
+        @keyframes deal { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* Colores Palos */
         .card[data-palo="Oros"] { color: #b8860b; } .card[data-palo="Copas"] { color: #d32f2f; }
         .card[data-palo="Espadas"] { color: #1976d2; } .card[data-palo="Bastos"] { color: #388e3c; }
 
         #played-area { display: flex; gap: 20px; height: 150px; align-items: center; }
-        .msg-turn { position: absolute; top: 90px; color: var(--gold); font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 5px black; }
+        #modal-ranking { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 350px; background: #1a1a1a; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; z-index: 1000; display: none; }
+        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -58,51 +50,50 @@
 
     <div id="screen-login" class="screen active">
         <div class="card-menu">
-            <h1 style="color:var(--gold); margin:0 0 15px 0; letter-spacing:4px;">ELITE CARDS</h1>
-            <input type="text" id="player-nick" placeholder="NOMBRE DE USUARIO">
+            <h1 style="color:var(--gold); margin-top:0;">ELITE CARDS</h1>
+            <input type="text" id="player-nick" placeholder="USUARIO">
             <input type="password" id="player-pin" placeholder="PIN (4 DÍGITOS)" maxlength="4">
             <button class="btn-main" onclick="autenticar()">INGRESAR</button>
-            <button class="btn-main btn-secondary" onclick="mostrarRanking()">RANKING GLOBAL</button>
+            <button class="btn-main btn-secondary" onclick="verRanking()">RANKING GLOBAL</button>
         </div>
     </div>
 
     <div id="screen-modes" class="screen">
         <div class="card-menu">
-            <h2 style="color:var(--gold)" id="welcome-msg">BIENVENIDO</h2>
-            <button class="btn-main" onclick="iniciarModoBot()">VS BOT 🤖</button>
+            <h2 id="welcome-txt" style="color:var(--gold)">HOLA</h2>
+            <button class="btn-main" onclick="modoBot()">JUGAR VS BOT 🤖</button>
             <button class="btn-main" style="background:#111; color:white;" onclick="abrirLobby()">MULTIJUGADOR 👥</button>
-            <button class="btn-main btn-secondary" onclick="location.reload()">CERRAR SESIÓN</button>
+            <button class="btn-main btn-secondary" onclick="location.reload()">SALIR</button>
         </div>
     </div>
 
     <div id="screen-lobby" class="screen">
         <div class="card-menu">
-            <h3 style="color:var(--gold)">SALAS DISPONIBLES</h3>
-            <div id="rooms-container" style="max-height: 200px; overflow-y: auto; margin-bottom:15px;"></div>
-            <button class="btn-main" onclick="crearMesaMulti()">+ CREAR NUEVA MESA</button>
-            <button class="btn-main btn-secondary" onclick="irAMenuModos()">VOLVER</button>
+            <h3 style="color:var(--gold)">SALAS</h3>
+            <div id="rooms" style="min-height: 100px;"></div>
+            <button class="btn-main" onclick="crearSala()">+ CREAR SALA</button>
+            <button class="btn-main btn-secondary" onclick="irModos()">VOLVER</button>
         </div>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="scoreboard">
-            <div>👤 <span id="u-name">---</span><br>G: <span id="u-w">0</span> | P: <span id="u-l">0</span></div>
-            <div style="text-align:center">ESTADO<br><span id="game-status" style="color:var(--gold)">ESPERANDO</span></div>
-            <div style="text-align:right">RIVAL: <span id="r-name">---</span><br><span id="vs-history">H: 0-0</span></div>
+            <div id="p1-info">---<br>Pts: 0</div>
+            <div style="text-align:center;"><span id="game-status">ESPERANDO</span><br><b id="pts-match">0 - 0</b></div>
+            <div id="p2-info" style="text-align:right;">RIVAL<br>Pts: 0</div>
         </div>
-        <div class="msg-turn" id="turn-indicator">CARGANDO...</div>
         <div id="played-area"></div>
         <div class="hand" id="my-hand"></div>
     </div>
 
     <div id="modal-ranking">
         <h3 style="color:var(--gold); text-align:center;">TOP 10 ELITE</h3>
-        <div id="ranking-list"></div>
-        <button class="btn-main" onclick="cerrarRanking()">CERRAR</button>
+        <div id="rank-content"></div>
+        <button class="btn-main" onclick="document.getElementById('modal-ranking').style.display='none'">CERRAR</button>
     </div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
+        // CONFIG FIREBASE (Tu Config)
         const firebaseConfig = { 
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -113,260 +104,179 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let userData = null;
-        let esMulti = false;
-        let miMano = [], manoBot = [], mesaID = null, miRol = "host";
-        let localMesa = { ptsJ: 0, ptsB: 0, tiradas: [], turno: "" };
+        let user = null, esMulti = false, miRol = "host", mesaID = null;
+        let miMano = [], mesaLocal = { tH: 0, tI: 0, tiradas: [], turno: "" };
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
 
-        // 1. JERARQUÍA DE PODER REAL
-        function obtenerPoder(v, p) {
-            if (v === 1 && p === "Espadas") return 14;
-            if (v === 1 && p === "Bastos") return 13;
-            if (v === 7 && p === "Espadas") return 12;
-            if (v === 7 && p === "Oros") return 11;
-            if (v === 3) return 10; if (v === 2) return 9; if (v === 1) return 8;
-            if (v === 12) return 7; if (v === 11) return 6; if (v === 10) return 5;
-            if (v === 7) return 4; if (v === 6) return 3; if (v === 5) return 2; if (v === 4) return 1;
+        function getPower(v, p) {
+            if (v===1 && p==="Espadas") return 14; if (v===1 && p==="Bastos") return 13;
+            if (v===7 && p==="Espadas") return 12; if (v===7 && p==="Oros") return 11;
+            if (v===3) return 10; if (v===2) return 9; if (v===1) return 8;
+            if (v===12) return 7; if (v===11) return 6; if (v===10) return 5;
+            if (v===7) return 4; if (v===6) return 3; if (v===5) return 2; if (v===4) return 1;
             return 0;
         }
 
-        // 2. SISTEMA DE USUARIO Y LOGIN
         async function autenticar() {
             const nick = document.getElementById('player-nick').value.trim().toLowerCase();
             const pin = document.getElementById('player-pin').value;
-            if(nick.length < 3 || pin.length < 4) return alert("Datos inválidos");
-
+            if(nick.length < 3 || pin.length < 4) return alert("Usuario min 3 carac. PIN 4 dígitos.");
+            
             const snap = await db.ref('usuarios/' + nick).once('value');
             if(snap.exists()) {
-                if(snap.val().pin === pin) { userData = snap.val(); }
+                if(snap.val().pin === pin) user = snap.val();
                 else return alert("PIN Incorrecto");
             } else {
-                userData = { nick, pin, pts: 0, wins: 0, loss: 0 };
-                await db.ref('usuarios/' + nick).set(userData);
+                user = { nick, pin, pts: 0, w: 0, l: 0 };
+                await db.ref('usuarios/' + nick).set(user);
             }
-            irAMenuModos();
+            irModos();
         }
 
-        function irAMenuModos() {
+        function irModos() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-modes').classList.add('active');
-            document.getElementById('welcome-msg').innerText = "HOLA, " + userData.nick.toUpperCase();
+            document.getElementById('welcome-txt').innerText = "HOLA, " + user.nick.toUpperCase();
         }
 
-        // 3. LÓGICA DE BOT (LOCAL)
-        function iniciarModoBot() {
+        function modoBot() {
             esMulti = false;
-            localMesa = { ptsJ: 0, ptsB: 0, tiradas: [], turno: userData.nick };
+            mesaLocal = { tH: 0, tI: 0, tiradas: [], turno: user.nick };
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-game').classList.add('active');
-            document.getElementById('u-name').innerText = userData.nick;
-            document.getElementById('r-name').innerText = "BOT 🤖";
-            repartirLocal();
+            startRound();
         }
 
-        function repartirLocal() {
-            const m = generarMazo();
-            miMano = [m[0], m[2], m[4]];
-            manoBot = [m[1], m[3], m[5]];
+        function startRound() {
+            const deck = [];
+            ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => deck.push({v,p})));
+            deck.sort(() => Math.random() - 0.5);
+            miMano = [deck[0], deck[2], deck[4]];
             render();
         }
 
-        function generarMazo() {
-            const m = [];
-            ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => m.push({v,p})));
-            return m.sort(() => Math.random() - 0.5);
-        }
-
-        // 4. LÓGICA MULTIJUGADOR (FIREBASE)
         function abrirLobby() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-lobby').classList.add('active');
             db.ref('mesas').on('value', snap => {
-                const container = document.getElementById('rooms-container');
-                container.innerHTML = "";
-                const mesas = snap.val();
-                if(mesas) Object.keys(mesas).forEach(id => {
-                    if(mesas[id].estado === "esperando") {
-                        container.innerHTML += `<button class="btn-main" onclick="unirseAMesa('${id}')">MESA DE ${mesas[id].host.toUpperCase()}</button>`;
+                const cont = document.getElementById('rooms'); cont.innerHTML = "";
+                if(snap.val()) Object.keys(snap.val()).forEach(id => {
+                    if(snap.val()[id].estado === "esperando") {
+                        cont.innerHTML += `<button class="btn-main" onclick="unirse('${id}')">UNIRSE A ${snap.val()[id].host.toUpperCase()}</button>`;
                     }
                 });
             });
         }
 
-        async function crearMesaMulti() {
-            mesaID = "MESA_" + Date.now();
-            miRol = "host";
-            esMulti = true;
-            const mazo = generarMazo();
+        async function crearSala() {
+            mesaID = "M-" + Date.now(); miRol = "host"; esMulti = true;
+            const deck = []; ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => deck.push({v,p})));
+            deck.sort(() => Math.random() - 0.5);
             await db.ref('mesas/' + mesaID).set({
-                host: userData.nick, invitado: "", mazo, turno: userData.nick,
+                host: user.nick, invitado: "", mazo: deck, turno: user.nick,
                 ptsH: 0, ptsI: 0, tiradas: [], estado: "esperando"
             });
-            entrarMesa();
+            entrarPartida();
         }
 
-        function unirseAMesa(id) {
-            mesaID = id;
-            miRol = "invitado";
-            esMulti = true;
-            db.ref('mesas/' + id).update({ invitado: userData.nick, estado: "jugando" });
-            entrarMesa();
+        function unirse(id) {
+            mesaID = id; miRol = "invitado"; esMulti = true;
+            db.ref('mesas/' + id).update({ invitado: user.nick, estado: "jugando" });
+            entrarPartida();
         }
 
-        function entrarMesa() {
+        function entrarPartida() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-game').classList.add('active');
-            
             db.ref('mesas/' + mesaID).on('value', snap => {
-                const mesa = snap.val();
-                if(!mesa) return;
+                const mesa = snap.val(); if(!mesa) return;
+                if(miMano.length === 0) miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
                 
-                // Cargar datos en pantalla
-                document.getElementById('u-name').innerText = userData.nick;
-                document.getElementById('r-name').innerText = (miRol === "host" ? mesa.invitado : mesa.host) || "ESPERANDO...";
-                document.getElementById('u-w').innerText = userData.wins;
-                document.getElementById('u-l').innerText = userData.loss;
-                
-                // Repartir cartas si la mano está vacía
-                if(miMano.length === 0) {
-                    miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
-                }
-
-                localMesa = { 
-                    ptsJ: (miRol === "host" ? mesa.ptsH : mesa.ptsI), 
-                    ptsB: (miRol === "host" ? mesa.ptsI : mesa.ptsH), 
-                    tiradas: mesa.tiradas || [], 
-                    turno: mesa.turno 
-                };
-                
+                mesaLocal = { tH: mesa.ptsH, tI: mesa.ptsI, tiradas: mesa.tiradas || [], turno: mesa.turno };
+                document.getElementById('p1-info').innerHTML = `${user.nick.toUpperCase()}<br>G:${user.w} P:${user.l}`;
+                document.getElementById('p2-info').innerHTML = `${(miRol === "host" ? mesa.invitado : mesa.host) || "..."}<br>Pts Global: ?`;
+                document.getElementById('pts-match').innerText = `${mesa.ptsH} - ${mesa.ptsI}`;
                 render();
 
-                // Lógica de evaluación automática por el Host
-                if(localMesa.tiradas.length === 2 && miRol === "host") {
+                if(mesaLocal.tiradas.length === 2 && miRol === "host") {
                     setTimeout(() => evaluarMulti(mesa), 1500);
                 }
             });
         }
 
-        // 5. EVALUACIÓN Y RESULTADOS
         function evaluarMulti(mesa) {
-            const p1 = obtenerPoder(mesa.tiradas[0].carta.v, mesa.tiradas[0].carta.p);
-            const p2 = obtenerPoder(mesa.tiradas[1].carta.v, mesa.tiradas[1].carta.p);
-            const ganadorNick = (p1 >= p2) ? mesa.tiradas[0].jugador : mesa.tiradas[1].jugador;
-            
-            let newPtsH = mesa.ptsH + (ganadorNick === mesa.host ? 1 : 0);
-            let newPtsI = mesa.ptsI + (ganadorNick === mesa.invitado ? 1 : 0);
+            const p1 = getPower(mesa.tiradas[0].c.v, mesa.tiradas[0].c.p);
+            const p2 = getPower(mesa.tiradas[1].c.v, mesa.tiradas[1].c.p);
+            const win = p1 >= p2 ? mesa.tiradas[0].u : mesa.tiradas[1].u;
+            let nH = mesa.ptsH + (win === mesa.host ? 1 : 0);
+            let nI = mesa.ptsI + (win === mesa.invitado ? 1 : 0);
 
-            if(newPtsH >= 15 || newPtsI >= 15) {
-                finalizarPartidaMulti(newPtsH >= 15 ? mesa.host : mesa.invitado);
+            if(nH >= 15 || nI >= 15) {
+                db.ref('mesas/' + mesaID).remove();
+                alert("FIN DE PARTIDA"); location.reload();
             } else {
-                db.ref('mesas/' + mesaID).update({
-                    tiradas: [], turno: ganadorNick, ptsH: newPtsH, ptsI: newPtsI,
-                    mazo: (miMano.length === 1) ? generarMazo() : mesa.mazo
-                });
+                db.ref('mesas/' + mesaID).update({ tiradas: [], turno: win, ptsH: nH, ptsI: nI, mazo: (miMano.length === 1) ? [] : mesa.mazo });
             }
         }
 
-        async function finalizarPartidaMulti(ganador) {
-            const soyGanador = (userData.nick === ganador);
-            userData.pts += (soyGanador ? 15 : 0);
-            if(soyGanador) userData.wins++; else userData.loss++;
-            
-            await db.ref('usuarios/' + userData.nick).set(userData);
-            alert(soyGanador ? "¡GANASTE LA PARTIDA!" : "HAS PERDIDO");
-            db.ref('mesas/' + mesaID).remove();
-            location.reload();
-        }
-
-        // 6. ACCIONES DE JUEGO
-        function jugarCarta(idx) {
-            if(localMesa.turno !== userData.nick || localMesa.tiradas.length >= 2) return;
-
-            const carta = miMano.splice(idx, 1)[0];
-            const tirada = { jugador: userData.nick, carta };
-
+        function jugar(i) {
+            if(mesaLocal.turno !== user.nick || mesaLocal.tiradas.length >= 2) return;
+            const c = miMano.splice(i, 1)[0];
             if(esMulti) {
-                const nuevasTiradas = [...localMesa.tiradas, tirada];
-                db.ref('mesas/' + mesaID).update({ 
-                    tiradas: nuevasTiradas, 
-                    turno: (miRol === "host" ? (localMesa.invitado || "invitado") : localMesa.host) 
-                });
+                const nuevas = [...mesaLocal.tiradas, { u: user.nick, c }];
+                db.ref('mesas/' + mesaID).update({ tiradas: nuevas, turno: "esperando" }); // Bloqueo temporal
+                setTimeout(() => {
+                    db.ref('mesas/' + mesaID).update({ turno: (miRol==="host" ? (document.getElementById('p2-info').innerText.split('\n')[0].toLowerCase() || user.nick) : user.nick) });
+                }, 100);
             } else {
-                localMesa.tiradas.push(tirada);
-                localMesa.turno = "Bot";
-                render();
-                setTimeout(iaBot, 1000);
+                mesaLocal.tiradas.push({ u: user.nick, c });
+                mesaLocal.turno = "Bot"; render();
+                setTimeout(botLogic, 1000);
             }
         }
 
-        function iaBot() {
-            const m = generarMazo()[0]; // El bot elige una al azar de un mazo nuevo para simular
-            localMesa.tiradas.push({ jugador: "Bot", carta: m });
+        function botLogic() {
+            const botCard = { v: Math.floor(Math.random()*12), p: "Oros" };
+            mesaLocal.tiradas.push({ u: "Bot", c: botCard });
             render();
-            setTimeout(evaluarBot, 1000);
+            setTimeout(() => {
+                const p1 = getPower(mesaLocal.tiradas[0].c.v, mesaLocal.tiradas[0].c.p);
+                const p2 = getPower(mesaLocal.tiradas[1].c.v, mesaLocal.tiradas[1].c.p);
+                const win = p1 >= p2 ? mesaLocal.tiradas[0].u : mesaLocal.tiradas[1].u;
+                if(win === user.nick) mesaLocal.tH++; else mesaLocal.tI++;
+                mesaLocal.tiradas = []; mesaLocal.turno = win;
+                if(miMano.length === 0) startRound();
+                render();
+            }, 1000);
         }
 
-        function evaluarBot() {
-            const p1 = obtenerPoder(localMesa.tiradas[0].carta.v, localMesa.tiradas[0].carta.p);
-            const p2 = obtenerPoder(localMesa.tiradas[1].carta.v, localMesa.tiradas[1].carta.p);
-            const win = p1 >= p2 ? localMesa.tiradas[0].jugador : localMesa.tiradas[1].jugador;
-
-            if(win === userData.nick) localMesa.ptsJ++; else localMesa.ptsB++;
-            localMesa.tiradas = [];
-            localMesa.turno = win;
-            
-            if(miMano.length === 0) repartirLocal();
-            if(localMesa.ptsJ >= 15) { alert("¡Ganaste!"); location.reload(); }
-            render();
-        }
-
-        // 7. RENDERIZADO
         function render() {
-            document.getElementById('score-mine').innerText = localMesa.ptsJ;
-            document.getElementById('score-theirs').innerText = localMesa.ptsB;
-            document.getElementById('turn-indicator').innerText = (localMesa.turno === userData.nick) ? "TU TURNO" : "ESPERANDO...";
-            
-            const handContainer = document.getElementById('my-hand');
-            handContainer.innerHTML = "";
+            document.getElementById('game-status').innerText = mesaLocal.turno === user.nick ? "TU TURNO" : "TURNO RIVAL";
+            const h = document.getElementById('my-hand'); h.innerHTML = "";
             miMano.forEach((c, i) => {
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.setAttribute('data-palo', c.p);
-                div.innerHTML = `<span>${c.v}</span><small>${ICONOS[c.p]}</small>`;
-                div.onclick = () => jugarCarta(i);
-                handContainer.appendChild(div);
+                const d = document.createElement('div'); d.className = 'card'; d.setAttribute('data-palo', c.p);
+                d.innerHTML = `<span>${c.v}</span><small>${ICONOS[c.p]}</small>`;
+                d.onclick = () => jugar(i); h.appendChild(d);
             });
-
-            const tableContainer = document.getElementById('played-area');
-            tableContainer.innerHTML = "";
-            localMesa.tiradas.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'card in-table';
-                div.setAttribute('data-palo', t.carta.p);
-                div.innerHTML = `<span>${t.carta.v}</span><small>${ICONOS[t.carta.p]}</small>`;
-                tableContainer.appendChild(div);
+            const a = document.getElementById('played-area'); a.innerHTML = "";
+            mesaLocal.tiradas.forEach(t => {
+                a.innerHTML += `<div class="card in-table" data-palo="${t.c.p}"><span>${t.c.v}</span><small>${ICONOS[t.c.p]}</small></div>`;
             });
         }
 
-        // 8. RANKING GLOBAL
-        async function mostrarRanking() {
+        async function verRanking() {
             const snap = await db.ref('usuarios').orderByChild('pts').limitToLast(10).once('value');
-            const list = document.getElementById('ranking-list');
-            list.innerHTML = "";
-            let users = [];
-            snap.forEach(child => users.push(child.val()));
-            users.reverse().forEach((u, i) => {
-                list.innerHTML += `<div class="rank-item"><span>#${i+1} ${u.nick}</span> <b>${u.pts} PTS</b></div>`;
+            const cont = document.getElementById('rank-content'); cont.innerHTML = "";
+            let items = []; snap.forEach(u => items.push(u.val()));
+            items.reverse().forEach((u, i) => {
+                cont.innerHTML += `<div class="rank-item"><span>#${i+1} ${u.nick}</span> <b>${u.pts} pts</b></div>`;
             });
             document.getElementById('modal-ranking').style.display = 'block';
         }
-        function cerrarRanking() { document.getElementById('modal-ranking').style.display = 'none'; }
 
-        // Inicializar Fondo
-        for(let i=0; i<15; i++) {
-            let d = document.createElement('div'); d.className='floating-card';
-            d.innerText = ['♠','♣','♥','♦'][Math.floor(Math.random()*4)];
+        // Decoración
+        for(let i=0; i<10; i++) {
+            let d = document.createElement('div'); d.className='floating-card'; d.innerText='♠';
             d.style.left = Math.random()*100+'vw'; d.style.animationDelay = Math.random()*10+'s';
             document.getElementById('bg-anim').appendChild(d);
         }
