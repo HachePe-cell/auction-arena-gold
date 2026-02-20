@@ -3,97 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | Final Verified</title>
+    <title>Elite Cards | Official</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; }
+        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; --shine: rgba(255,255,255,0.2); }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* Fondo Animado */
-        .bg-animation { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle, #1a1a1a, #000); }
+        /* PANTALLA DE CARGA (SPLASH) */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 2000; transition: opacity 1s ease;
+        }
+        .logo-container { position: relative; margin-bottom: 20px; }
+        .logo-text { font-size: 3rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); animation: pulse 2s infinite; }
+        .loader-bar { width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; margin-top: 20px; }
+        .loader-progress { width: 0%; height: 100%; background: var(--gold); animation: load 3s forwards; }
+        
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        @keyframes load { to { width: 100%; } }
+
+        /* FONDO ANIMADO */
+        .bg-animation { position: fixed; width: 100%; height: 100%; z-index: -1; background: #0a0a0a; }
         .floating-card { position: absolute; opacity: 0.1; font-size: 40px; animation: float 15s linear infinite; bottom: -100px; color: var(--gold); }
         @keyframes float { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-110vh) rotate(360deg); } }
 
+        /* COMPONENTES GENERALES */
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .active { display: flex; }
+        .card-menu { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 350px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 0 #8a6508; }
+        .btn-main:active { transform: translateY(2px); box-shadow: 0 2px 0 #8a6508; }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; }
 
-        /* UI Menú */
-        .card-menu { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 350px; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
-        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.2s; }
-        .btn-main:active { transform: scale(0.95); }
-        .btn-secondary { background: #333; color: white; border: 1px solid var(--gold); }
-        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; font-size: 16px; }
-
-        /* Juego */
+        /* MESA DE JUEGO */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
         .scoreboard { position: absolute; top: 15px; width: 92%; display: flex; justify-content: space-between; background: rgba(0,0,0,0.85); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); font-size: 11px; z-index: 100; }
         .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; }
-        .card { width: 75px; height: 110px; background: white; border-radius: 8px; color: black; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #333; cursor: pointer; position: relative; }
-        .card.in-table { animation: deal 0.4s ease-out forwards; }
-        @keyframes deal { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* Colores Palos */
+        .card { width: 75px; height: 110px; background: white; border-radius: 8px; color: black; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #333; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
         .card[data-palo="Oros"] { color: #b8860b; } .card[data-palo="Copas"] { color: #d32f2f; }
         .card[data-palo="Espadas"] { color: #1976d2; } .card[data-palo="Bastos"] { color: #388e3c; }
+        .card.in-table { animation: slideIn 0.4s ease-out forwards; }
+        @keyframes slideIn { from { transform: scale(0.5) translateY(100px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
 
         #played-area { display: flex; gap: 20px; height: 150px; align-items: center; }
-        #modal-ranking { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 350px; background: #1a1a1a; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; z-index: 1000; display: none; }
-        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
 
+    <div id="splash-screen">
+        <div class="logo-container">
+            <div class="logo-text">ELITE CARDS</div>
+        </div>
+        <div style="font-size: 12px; color: var(--gold); letter-spacing: 2px;">CARGANDO EXPERIENCIA</div>
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
+
     <div class="bg-animation" id="bg-anim"></div>
 
-    <div id="screen-login" class="screen active">
+    <div id="screen-login" class="screen">
         <div class="card-menu">
-            <h1 style="color:var(--gold); margin-top:0;">ELITE CARDS</h1>
-            <input type="text" id="player-nick" placeholder="USUARIO">
+            <h1 style="color:var(--gold); margin-top:0;">BIENVENIDO</h1>
+            <input type="text" id="player-nick" placeholder="NOMBRE DE USUARIO">
             <input type="password" id="player-pin" placeholder="PIN (4 DÍGITOS)" maxlength="4">
             <button class="btn-main" onclick="autenticar()">INGRESAR</button>
-            <button class="btn-main btn-secondary" onclick="verRanking()">RANKING GLOBAL</button>
+            <button class="btn-main" style="background: #222; color: white;" onclick="verRanking()">RANKING GLOBAL</button>
         </div>
     </div>
 
     <div id="screen-modes" class="screen">
         <div class="card-menu">
             <h2 id="welcome-txt" style="color:var(--gold)">HOLA</h2>
-            <button class="btn-main" onclick="modoBot()">JUGAR VS BOT 🤖</button>
+            <button class="btn-main" onclick="modoBot()">VS BOT 🤖</button>
             <button class="btn-main" style="background:#111; color:white;" onclick="abrirLobby()">MULTIJUGADOR 👥</button>
-            <button class="btn-main btn-secondary" onclick="location.reload()">SALIR</button>
+            <button class="btn-main" style="background:#400; color:white;" onclick="location.reload()">SALIR</button>
         </div>
     </div>
 
     <div id="screen-lobby" class="screen">
         <div class="card-menu">
-            <h3 style="color:var(--gold)">SALAS</h3>
-            <div id="rooms" style="min-height: 100px;"></div>
-            <button class="btn-main" onclick="crearSala()">+ CREAR SALA</button>
-            <button class="btn-main btn-secondary" onclick="irModos()">VOLVER</button>
+            <h3 style="color:var(--gold)">SALAS ACTIVAS</h3>
+            <div id="rooms-list" style="min-height: 50px; margin-bottom: 10px;"></div>
+            <button class="btn-main" onclick="crearSala()">+ CREAR NUEVA SALA</button>
+            <button class="btn-main" style="background:#333; color:white;" onclick="irModos()">VOLVER</button>
         </div>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="scoreboard">
-            <div id="p1-info">---<br>Pts: 0</div>
-            <div style="text-align:center;"><span id="game-status">ESPERANDO</span><br><b id="pts-match">0 - 0</b></div>
-            <div id="p2-info" style="text-align:right;">RIVAL<br>Pts: 0</div>
+            <div id="p1-info">USUARIO<br>G: 0 | P: 0</div>
+            <div style="text-align:center;"><span id="match-status" style="color:var(--gold)">TU TURNO</span><br><b id="pts-match" style="font-size: 1.2rem;">0 - 0</b></div>
+            <div id="p2-info" style="text-align:right;">RIVAL<br>H: 0-0</div>
         </div>
         <div id="played-area"></div>
         <div class="hand" id="my-hand"></div>
     </div>
 
-    <div id="modal-ranking">
-        <h3 style="color:var(--gold); text-align:center;">TOP 10 ELITE</h3>
-        <div id="rank-content"></div>
-        <button class="btn-main" onclick="document.getElementById('modal-ranking').style.display='none'">CERRAR</button>
-    </div>
-
     <script>
-        // CONFIG FIREBASE (Tu Config)
+        // CONFIG FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -104,10 +117,23 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let user = null, esMulti = false, miRol = "host", mesaID = null;
-        let miMano = [], mesaLocal = { tH: 0, tI: 0, tiradas: [], turno: "" };
+        let user = null, esMulti = false, mesaID = null, miRol = "host";
+        let miMano = [], mesaLocal = { ptsH: 0, ptsI: 0, tiradas: [], turno: "" };
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
 
+        // Animación de salida del Splash
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    document.getElementById('screen-login').classList.add('active');
+                }, 1000);
+            }, 3000);
+        });
+
+        // JERARQUÍA REAL
         function getPower(v, p) {
             if (v===1 && p==="Espadas") return 14; if (v===1 && p==="Bastos") return 13;
             if (v===7 && p==="Espadas") return 12; if (v===7 && p==="Oros") return 11;
@@ -120,14 +146,14 @@
         async function autenticar() {
             const nick = document.getElementById('player-nick').value.trim().toLowerCase();
             const pin = document.getElementById('player-pin').value;
-            if(nick.length < 3 || pin.length < 4) return alert("Usuario min 3 carac. PIN 4 dígitos.");
-            
+            if(nick.length < 3 || pin.length < 4) return alert("Completa los campos.");
+
             const snap = await db.ref('usuarios/' + nick).once('value');
             if(snap.exists()) {
                 if(snap.val().pin === pin) user = snap.val();
                 else return alert("PIN Incorrecto");
             } else {
-                user = { nick, pin, pts: 0, w: 0, l: 0 };
+                user = { nick, pin, pts: 0, wins: 0, loss: 0 };
                 await db.ref('usuarios/' + nick).set(user);
             }
             irModos();
@@ -141,28 +167,33 @@
 
         function modoBot() {
             esMulti = false;
-            mesaLocal = { tH: 0, tI: 0, tiradas: [], turno: user.nick };
+            mesaLocal = { ptsH: 0, ptsI: 0, tiradas: [], turno: user.nick };
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-game').classList.add('active');
-            startRound();
+            startBotGame();
         }
 
-        function startRound() {
-            const deck = [];
-            ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => deck.push({v,p})));
-            deck.sort(() => Math.random() - 0.5);
-            miMano = [deck[0], deck[2], deck[4]];
+        function startBotGame() {
+            const mazo = generarMazo();
+            miMano = [mazo[0], mazo[2], mazo[4]];
+            manoBot = [mazo[1], mazo[3], mazo[5]];
             render();
+        }
+
+        function generarMazo() {
+            const m = [];
+            ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => m.push({v,p})));
+            return m.sort(() => Math.random() - 0.5);
         }
 
         function abrirLobby() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-lobby').classList.add('active');
             db.ref('mesas').on('value', snap => {
-                const cont = document.getElementById('rooms'); cont.innerHTML = "";
+                const list = document.getElementById('rooms-list'); list.innerHTML = "";
                 if(snap.val()) Object.keys(snap.val()).forEach(id => {
                     if(snap.val()[id].estado === "esperando") {
-                        cont.innerHTML += `<button class="btn-main" onclick="unirse('${id}')">UNIRSE A ${snap.val()[id].host.toUpperCase()}</button>`;
+                        list.innerHTML += `<button class="btn-main" onclick="unirse('${id}')">SALA DE ${snap.val()[id].host.toUpperCase()}</button>`;
                     }
                 });
             });
@@ -170,88 +201,70 @@
 
         async function crearSala() {
             mesaID = "M-" + Date.now(); miRol = "host"; esMulti = true;
-            const deck = []; ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => deck.push({v,p})));
-            deck.sort(() => Math.random() - 0.5);
             await db.ref('mesas/' + mesaID).set({
-                host: user.nick, invitado: "", mazo: deck, turno: user.nick,
+                host: user.nick, invitado: "", mazo: generarMazo(), turno: user.nick,
                 ptsH: 0, ptsI: 0, tiradas: [], estado: "esperando"
             });
-            entrarPartida();
+            iniciarEscuchaMulti();
         }
 
         function unirse(id) {
             mesaID = id; miRol = "invitado"; esMulti = true;
             db.ref('mesas/' + id).update({ invitado: user.nick, estado: "jugando" });
-            entrarPartida();
+            iniciarEscuchaMulti();
         }
 
-        function entrarPartida() {
+        function iniciarEscuchaMulti() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-game').classList.add('active');
             db.ref('mesas/' + mesaID).on('value', snap => {
                 const mesa = snap.val(); if(!mesa) return;
-                if(miMano.length === 0) miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
-                
-                mesaLocal = { tH: mesa.ptsH, tI: mesa.ptsI, tiradas: mesa.tiradas || [], turno: mesa.turno };
-                document.getElementById('p1-info').innerHTML = `${user.nick.toUpperCase()}<br>G:${user.w} P:${user.l}`;
-                document.getElementById('p2-info').innerHTML = `${(miRol === "host" ? mesa.invitado : mesa.host) || "..."}<br>Pts Global: ?`;
+                if(miMano.length === 0) {
+                    miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
+                }
+                mesaLocal = { ptsH: mesa.ptsH, ptsI: mesa.ptsI, tiradas: mesa.tiradas || [], turno: mesa.turno };
+                document.getElementById('p1-info').innerHTML = `${user.nick.toUpperCase()}<br>G: ${user.wins}`;
+                document.getElementById('p2-info').innerHTML = `${(miRol === "host" ? mesa.invitado : mesa.host) || "..."}<br>Pts: ?`;
                 document.getElementById('pts-match').innerText = `${mesa.ptsH} - ${mesa.ptsI}`;
                 render();
 
                 if(mesaLocal.tiradas.length === 2 && miRol === "host") {
-                    setTimeout(() => evaluarMulti(mesa), 1500);
+                    setTimeout(() => evaluarRondaMulti(mesa), 1000);
                 }
             });
-        }
-
-        function evaluarMulti(mesa) {
-            const p1 = getPower(mesa.tiradas[0].c.v, mesa.tiradas[0].c.p);
-            const p2 = getPower(mesa.tiradas[1].c.v, mesa.tiradas[1].c.p);
-            const win = p1 >= p2 ? mesa.tiradas[0].u : mesa.tiradas[1].u;
-            let nH = mesa.ptsH + (win === mesa.host ? 1 : 0);
-            let nI = mesa.ptsI + (win === mesa.invitado ? 1 : 0);
-
-            if(nH >= 15 || nI >= 15) {
-                db.ref('mesas/' + mesaID).remove();
-                alert("FIN DE PARTIDA"); location.reload();
-            } else {
-                db.ref('mesas/' + mesaID).update({ tiradas: [], turno: win, ptsH: nH, ptsI: nI, mazo: (miMano.length === 1) ? [] : mesa.mazo });
-            }
         }
 
         function jugar(i) {
             if(mesaLocal.turno !== user.nick || mesaLocal.tiradas.length >= 2) return;
             const c = miMano.splice(i, 1)[0];
             if(esMulti) {
-                const nuevas = [...mesaLocal.tiradas, { u: user.nick, c }];
-                db.ref('mesas/' + mesaID).update({ tiradas: nuevas, turno: "esperando" }); // Bloqueo temporal
+                const t = [...mesaLocal.tiradas, { u: user.nick, c }];
+                db.ref('mesas/' + mesaID).update({ tiradas: t, turno: "..." });
                 setTimeout(() => {
-                    db.ref('mesas/' + mesaID).update({ turno: (miRol==="host" ? (document.getElementById('p2-info').innerText.split('\n')[0].toLowerCase() || user.nick) : user.nick) });
-                }, 100);
+                    db.ref('mesas/' + mesaID).update({ turno: (miRol === "host" ? "invitado_manual" : "host_manual") }); // Simplificación de turno
+                }, 200);
             } else {
                 mesaLocal.tiradas.push({ u: user.nick, c });
                 mesaLocal.turno = "Bot"; render();
-                setTimeout(botLogic, 1000);
+                setTimeout(botTurno, 1000);
             }
         }
 
-        function botLogic() {
-            const botCard = { v: Math.floor(Math.random()*12), p: "Oros" };
-            mesaLocal.tiradas.push({ u: "Bot", c: botCard });
+        function botTurno() {
+            const bc = { v: Math.floor(Math.random()*12), p: "Copas" };
+            mesaLocal.tiradas.push({ u: "Bot", c: bc });
             render();
             setTimeout(() => {
-                const p1 = getPower(mesaLocal.tiradas[0].c.v, mesaLocal.tiradas[0].c.p);
-                const p2 = getPower(mesaLocal.tiradas[1].c.v, mesaLocal.tiradas[1].c.p);
-                const win = p1 >= p2 ? mesaLocal.tiradas[0].u : mesaLocal.tiradas[1].u;
-                if(win === user.nick) mesaLocal.tH++; else mesaLocal.tI++;
+                const win = getPower(mesaLocal.tiradas[0].c.v, mesaLocal.tiradas[0].c.p) >= getPower(mesaLocal.tiradas[1].c.v, mesaLocal.tiradas[1].c.p) ? user.nick : "Bot";
+                if(win === user.nick) mesaLocal.ptsH++; else mesaLocal.ptsI++;
                 mesaLocal.tiradas = []; mesaLocal.turno = win;
-                if(miMano.length === 0) startRound();
+                if(miMano.length === 0) startBotGame();
                 render();
             }, 1000);
         }
 
         function render() {
-            document.getElementById('game-status').innerText = mesaLocal.turno === user.nick ? "TU TURNO" : "TURNO RIVAL";
+            document.getElementById('match-status').innerText = (mesaLocal.turno === user.nick) ? "TU TURNO" : "ESPERANDO...";
             const h = document.getElementById('my-hand'); h.innerHTML = "";
             miMano.forEach((c, i) => {
                 const d = document.createElement('div'); d.className = 'card'; d.setAttribute('data-palo', c.p);
@@ -264,21 +277,12 @@
             });
         }
 
-        async function verRanking() {
-            const snap = await db.ref('usuarios').orderByChild('pts').limitToLast(10).once('value');
-            const cont = document.getElementById('rank-content'); cont.innerHTML = "";
-            let items = []; snap.forEach(u => items.push(u.val()));
-            items.reverse().forEach((u, i) => {
-                cont.innerHTML += `<div class="rank-item"><span>#${i+1} ${u.nick}</span> <b>${u.pts} pts</b></div>`;
-            });
-            document.getElementById('modal-ranking').style.display = 'block';
-        }
-
-        // Decoración
-        for(let i=0; i<10; i++) {
+        // Decoración fondo
+        const anim = document.getElementById('bg-anim');
+        for(let i=0; i<12; i++) {
             let d = document.createElement('div'); d.className='floating-card'; d.innerText='♠';
-            d.style.left = Math.random()*100+'vw'; d.style.animationDelay = Math.random()*10+'s';
-            document.getElementById('bg-anim').appendChild(d);
+            d.style.left = Math.random()*100+'vw'; d.style.animationDelay = Math.random()*15+'s';
+            anim.appendChild(d);
         }
     </script>
 </body>
