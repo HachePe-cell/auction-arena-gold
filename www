@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="google-adsense-account" content="ca-pub-1479705494159422">
+    <title>Elite Cards | Master Pro</title>
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1479705494159422" crossorigin="anonymous"></script>
+
+    <style>
+        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; --red: #c0392b; --disabled: #555; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        /* Modal de Revivir con Blur */
+        #modal-ad {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .card-menu { background: #111; padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 350px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
+        /* Botón con Estado Deshabilitado */
+        .btn-reward { 
+            background: linear-gradient(to bottom, var(--gold), #b8860b); 
+            color: #000; border: none; padding: 16px; border-radius: 10px; 
+            font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; 
+            text-transform: uppercase; transition: 0.3s;
+        }
+        .btn-reward:disabled {
+            background: var(--disabled);
+            color: #888;
+            cursor: not-allowed;
+            transform: scale(0.98);
+        }
+
+        #ad-box { 
+            width: 100%; height: 250px; background: #000; margin: 15px 0; 
+            display: flex; align-items: center; justify-content: center; 
+            border: 1px solid #333; position: relative;
+        }
+
+        .timer-text { font-size: 0.8rem; color: var(--gold); margin-bottom: 5px; font-weight: bold; }
+        
+        /* Estilo Cartas */
+        .card { width: 70px; height: 105px; background: white; border-radius: 8px; color: #222; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px; font-weight: bold; border: 2px solid #333; }
+        .card[data-suit="Oros"] { color: #b8860b; } .card[data-suit="Copas"] { color: #d32f2f; }
+        .hand { display: flex; gap: 8px; position: absolute; bottom: 20px; }
+        .scoreboard { position: absolute; top: 10px; width: 90%; display: flex; justify-content: space-between; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div id="modal-ad">
+        <div class="card-menu">
+            <h2 style="color:var(--gold); margin:0;">¿ULTIMA VIDA?</h2>
+            <p style="font-size: 14px;">El BOT está por ganar. Mira el anuncio para restarle puntos y seguir jugando.</p>
+            
+            <div id="ad-box">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-1479705494159422"
+                     data-ad-slot="REEMPLAZAR_CON_TU_SLOT"
+                     data-ad-format="auto"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <div id="timer-display" class="timer-text">DESBLOQUEANDO EN 5s...</div>
+            <button id="btn-claim" class="btn-reward" onclick="reclamarRecompensa()" disabled>
+                OBTENER REVANCHA
+            </button>
+            <button class="btn-reward" style="background:transparent; color:#888; border:1px solid #333; font-size:11px;" onclick="location.reload()">RENDIRSE</button>
+        </div>
+    </div>
+
+    <div id="game-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%);">
+        <div class="scoreboard">
+            <div id="p1-pts">TÚ: 0</div>
+            <div id="p2-pts">BOT: 0</div>
+        </div>
+        <div id="table" style="height: 150px; display: flex; gap: 10px; align-items: center;"></div>
+        <div class="hand" id="player-hand"></div>
+    </div>
+
+    <script>
+        let gameState = { p1: 0, p2: 0, usedAd: false };
+        const icons = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
+
+        // Función para mostrar el Modal e iniciar el contador
+        function mostrarRevivir() {
+            const modal = document.getElementById('modal-ad');
+            const btn = document.getElementById('btn-claim');
+            const timerTxt = document.getElementById('timer-display');
+            let timeLeft = 5;
+
+            modal.style.display = 'flex';
+            btn.disabled = true;
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerTxt.innerText = `DESBLOQUEANDO EN ${timeLeft}s...`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    timerTxt.innerText = "¡ANUNCIO COMPLETADO!";
+                    btn.disabled = false;
+                    btn.style.animation = "pulse 1s infinite";
+                }
+            }, 1000);
+        }
+
+        function reclamarRecompensa() {
+            gameState.p2 = 10; // Reducimos puntos del rival
+            gameState.usedAd = true;
+            document.getElementById('modal-ad').style.display = 'none';
+            alert("¡Revancha concedida! BOT penalizado a 10 puntos.");
+            nuevaMano();
+        }
+
+        // --- Lógica de Juego (Mini Motor) ---
+        function nuevaMano() {
+            const suits = ["Oros", "Copas", "Espadas", "Bastos"];
+            const h = document.getElementById('player-hand');
+            h.innerHTML = "";
+            for(let i=0; i<3; i++) {
+                const c = {v: Math.floor(Math.random()*10)+1, s: suits[Math.floor(Math.random()*4)]};
+                const d = document.createElement('div');
+                d.className = 'card'; d.setAttribute('data-suit', c.s);
+                d.innerHTML = `<div>${c.v}</div><div>${icons[c.s]}</div>`;
+                d.onclick = () => jugar(c, d);
+                h.appendChild(d);
+            }
+            renderScores();
+        }
+
+        function jugar(c, el) {
+            el.style.visibility = "hidden";
+            const table = document.getElementById('table');
+            const d = document.createElement('div');
+            d.className = 'card'; d.setAttribute('data-suit', c.s);
+            d.innerHTML = `<div>${c.v}</div><div>${icons[c.s]}</div>`;
+            table.appendChild(d);
+            
+            setTimeout(() => {
+                // Simular que el bot gana
+                gameState.p2++;
+                table.innerHTML = "";
+                if(gameState.p2 >= 15 && !gameState.usedAd) {
+                    mostrarRevivir();
+                } else if(gameState.p2 >= 15 && gameState.usedAd) {
+                    alert("Fin del juego definitivo.");
+                    location.reload();
+                }
+                renderScores();
+            }, 600);
+        }
+
+        function renderScores() {
+            document.getElementById('p1-pts').innerText = `TÚ: ${gameState.p1}`;
+            document.getElementById('p2-pts').innerText = `BOT: ${gameState.p2}`;
+        }
+
+        window.onload = nuevaMano;
+    </script>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(212, 175, 55, 0.4); }
+            50% { transform: scale(1.03); box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(212, 175, 55, 0.4); }
+        }
+    </style>
+</body>
+</html>
