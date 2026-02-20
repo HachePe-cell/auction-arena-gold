@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | Final Fix</title>
+    <title>Elite Cards | Pro Ranking</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -12,38 +12,27 @@
         :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* FONDO ANIMADO MEJORADO */
+        /* Fondo */
         .bg-animation { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle, #1a1a1a, #000); }
-        .floating-card { position: absolute; opacity: 0.15; font-size: 40px; animation: float 12s linear infinite; bottom: -100px; color: var(--gold); }
+        .floating-card { position: absolute; opacity: 0.1; font-size: 40px; animation: float 12s linear infinite; bottom: -100px; color: var(--gold); }
         @keyframes float { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-110vh) rotate(360deg); } }
 
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .active { display: flex; }
 
-        .card-menu { background: rgba(0,0,0,0.85); padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 320px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
-        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; }
-        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; font-size: 16px; }
+        .card-menu { background: rgba(0,0,0,0.9); padding: 25px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 320px; box-shadow: 0 0 30px rgba(212,175,55,0.2); }
+        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; text-transform: uppercase; font-size: 12px; }
+        input { width: 90%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; }
 
-        /* MESA DE JUEGO */
+        /* Ranking Modal */
+        #modal-ranking { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: #1a1a1a; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; z-index: 1000; display: none; max-height: 80vh; overflow-y: auto; }
+        .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
+
+        /* Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
-        .scoreboard { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--gold); font-size: 13px; z-index: 100; }
-        
-        .card { 
-            width: 75px; height: 115px; background: white; border-radius: 10px; color: black;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; border: 3px solid #333; cursor: pointer; position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.3s;
-        }
-        .card.in-table { animation: deal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes deal { from { transform: translateY(100px) scale(0.5); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-
-        .card[data-palo="Oros"] { color: #b8860b; } .card[data-palo="Copas"] { color: #d32f2f; }
-        .card[data-palo="Espadas"] { color: #1976d2; } .card[data-palo="Bastos"] { color: #388e3c; }
-
-        .hand { display: flex; gap: 12px; position: absolute; bottom: 40px; }
-        #played-area { display: flex; gap: 20px; height: 160px; align-items: center; }
-        
-        .turn-tag { position: absolute; top: 80px; font-size: 12px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; }
+        .scoreboard { position: absolute; top: 15px; width: 90%; display: flex; justify-content: space-between; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px; border: 1px solid var(--gold); font-size: 11px; }
+        .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; }
+        .card { width: 70px; height: 100px; background: white; border-radius: 8px; color: black; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #333; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -52,28 +41,31 @@
 
     <div id="screen-login" class="screen active">
         <div class="card-menu">
-            <h1 style="color:var(--gold); margin-bottom:20px; letter-spacing:3px;">ELITE CARDS</h1>
-            <input type="text" id="player-nick" placeholder="NOMBRE DE USUARIO">
-            <input type="password" id="player-pin" placeholder="PIN DE 4 DÍGITOS" maxlength="4">
-            <button class="btn-main" onclick="autenticar()">ENTRAR AL JUEGO</button>
-            <p style="font-size: 10px; margin-top: 15px; color: #888;">Si el usuario no existe, se creará automáticamente.</p>
+            <h1 style="color:var(--gold); margin-bottom:15px;">ELITE CARDS</h1>
+            <input type="text" id="player-nick" placeholder="USUARIO">
+            <input type="password" id="player-pin" placeholder="PIN (4 DÍGITOS)" maxlength="4">
+            <button class="btn-main" onclick="autenticar()">INGRESAR</button>
+            <button class="btn-main" style="background: #333; color: white;" onclick="mostrarRanking()">VER RANKING GLOBAL</button>
         </div>
+    </div>
+
+    <div id="modal-ranking">
+        <h3 style="color:var(--gold); text-align:center;">TOP JUGADORES</h3>
+        <div id="ranking-list"></div>
+        <button class="btn-main" onclick="cerrarRanking()">CERRAR</button>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="scoreboard">
-            <div>👤 <span id="display-name">---</span> (<span id="global-pts">0</span> pts)</div>
-            <div>🆚 TÚ: <span id="score-mine" style="color:var(--gold)">0</span> | BOT: <span id="score-theirs">0</span></div>
+            <div>👤 <span id="name-j">---</span><br>G: <span id="w-j">0</span> | P: <span id="l-j">0</span></div>
+            <div style="text-align: center; color: var(--gold); font-weight: bold;">VS</div>
+            <div style="text-align: right;">👤 RIVAL<br><span id="vs-stats">Historial: 0-0</span></div>
         </div>
-        
-        <div id="turn-indicator" class="turn-tag">TU TURNO</div>
-        
-        <div id="played-area"></div>
+        <div id="played-area" style="display:flex; gap:15px; height:120px; align-items:center;"></div>
         <div class="hand" id="my-hand"></div>
     </div>
 
     <script>
-        // CONFIG FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -84,155 +76,142 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let userData = { nick: "", pin: "", pts: 0 };
-        let miMano = [], manoBot = [], mesaLocal = { turno: "", ptsJ: 0, ptsB: 0, tiradas: [] };
-        let bloqueado = false;
-        const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
-
-        // --- INICIALIZACIÓN ---
-        (function initBg() {
-            const anim = document.getElementById('bg-anim');
-            for(let i=0; i<12; i++) {
-                let div = document.createElement('div');
-                div.className = 'floating-card';
-                div.innerText = ['♠','♣','♥','♦'][Math.floor(Math.random()*4)];
-                div.style.left = Math.random() * 100 + 'vw';
-                div.style.animationDelay = Math.random() * 10 + 's';
-                anim.appendChild(div);
-            }
-        })();
-
-        // --- SISTEMA DE PODER REAL ---
-        function obtenerPoder(v, p) {
-            if (v === 1 && p === "Espadas") return 14;
-            if (v === 1 && p === "Bastos") return 13;
-            if (v === 7 && p === "Espadas") return 12;
-            if (v === 7 && p === "Oros") return 11;
-            if (v === 3) return 10;
-            if (v === 2) return 9;
-            if (v === 1) return 8; // Otros 1s
-            if (v === 12) return 7; if (v === 11) return 6; if (v === 10) return 5;
-            if (v === 7) return 4; // Otros 7s
-            if (v === 6) return 3; if (v === 5) return 2; if (v === 4) return 1;
-            return 0;
-        }
+        let user = { nick: "", pin: "", pts: 0, wins: 0, loss: 0 };
+        let rivalActual = "Bot";
+        let mesa = { ptsJ: 0, ptsB: 0, tiradas: [], turno: "" };
 
         // --- AUTENTICACIÓN ---
         async function autenticar() {
             const nick = document.getElementById('player-nick').value.trim().toLowerCase();
             const pin = document.getElementById('player-pin').value;
-            if(!nick || pin.length < 4) return alert("Ingresa usuario y PIN de 4 dígitos");
+            if(!nick || pin.length < 4) return alert("Datos incompletos");
 
             const snap = await db.ref('usuarios/' + nick).once('value');
             const data = snap.val();
 
             if(data) {
-                if(data.pin === pin) { userData = data; iniciarPartida(); }
-                else alert("PIN incorrecto para este usuario");
+                if(data.pin === pin) { user = data; iniciar(); }
+                else alert("PIN incorrecto");
             } else {
-                userData = { nick, pin, pts: 0 };
-                await db.ref('usuarios/' + nick).set(userData);
-                iniciarPartida();
+                user = { nick, pin, pts: 0, wins: 0, loss: 0 };
+                await db.ref('usuarios/' + nick).set(user);
+                iniciar();
             }
         }
 
-        function iniciarPartida() {
+        function iniciar() {
             document.getElementById('screen-login').classList.remove('active');
             document.getElementById('screen-game').classList.add('active');
-            document.getElementById('display-name').innerText = userData.nick;
-            document.getElementById('global-pts').innerText = userData.pts;
+            document.getElementById('name-j').innerText = user.nick.toUpperCase();
+            document.getElementById('w-j').innerText = user.wins;
+            document.getElementById('l-j').innerText = user.loss;
+            cargarHistorialCaraACara();
             nuevaMano();
         }
 
-        function nuevaMano() {
-            const mazo = [];
-            ["Oros", "Copas", "Espadas", "Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => mazo.push({v, p})));
-            mazo.sort(() => Math.random() - 0.5);
-            miMano = [mazo[0], mazo[2], mazo[4]];
-            manoBot = [mazo[1], mazo[3], mazo[5]];
-            mesaLocal.turno = mesaLocal.turno || userData.nick;
-            render();
-            if(mesaLocal.turno === "Bot") setTimeout(botJuega, 1000);
+        // --- RANKING INTERNO (CARA A CARA) ---
+        async function cargarHistorialCaraACara() {
+            if(rivalActual === "Bot") {
+                document.getElementById('vs-stats').innerText = "Vs Bot: Clásico";
+                return;
+            }
+            // Lógica para multijugador: busca en la tabla 'enfrentamientos/user_rival'
+            const path = [user.nick, rivalActual].sort().join("_");
+            const snap = await db.ref('historial/' + path).once('value');
+            const data = snap.val() || { [user.nick]: 0, [rivalActual]: 0 };
+            document.getElementById('vs-stats').innerText = `Tú ${data[user.nick]} - ${data[rivalActual]} Él`;
         }
 
-        // --- LÓGICA DE TURNOS ---
-        function tirarCarta(i) {
-            if(mesaLocal.turno !== userData.nick || bloqueado || mesaLocal.tiradas.length >= 2) return;
-            
-            const carta = miMano.splice(i, 1)[0];
-            mesaLocal.tiradas.push({ j: userData.nick, carta });
-            mesaLocal.turno = "Bot";
-            bloqueado = true;
-            render();
-            
-            if(mesaLocal.tiradas.length === 1) setTimeout(botJuega, 1200);
-            else setTimeout(evaluarRonda, 1000);
-        }
+        async function registrarResultado(ganoYo) {
+            // 1. Actualizar perfil propio
+            if(ganoYo) user.wins++; else user.loss++;
+            user.pts += (ganoYo ? 15 : 0);
+            await db.ref('usuarios/' + user.nick).update(user);
 
-        function botJuega() {
-            const index = Math.floor(Math.random() * manoBot.length);
-            const carta = manoBot.splice(index, 1)[0];
-            mesaLocal.tiradas.push({ j: "Bot", carta });
-            render();
-            
-            if(mesaLocal.tiradas.length === 2) setTimeout(evaluarRonda, 1000);
-            else { mesaLocal.turno = userData.nick; bloqueado = false; render(); }
-        }
-
-        async function evaluarRonda() {
-            const p1 = obtenerPoder(mesaLocal.tiradas[0].carta.v, mesaLocal.tiradas[0].carta.p);
-            const p2 = obtenerPoder(mesaLocal.tiradas[1].carta.v, mesaLocal.tiradas[1].carta.p);
-            
-            const ganador = p1 >= p2 ? mesaLocal.tiradas[0].j : mesaLocal.tiradas[1].j;
-            
-            if(ganador === userData.nick) mesaLocal.ptsJ++; else mesaLocal.ptsB++;
-            
-            mesaLocal.tiradas = [];
-            mesaLocal.turno = ganador;
-            bloqueado = false;
-
-            if(mesaLocal.ptsJ >= 15 || mesaLocal.ptsB >= 15) {
-                const victoria = mesaLocal.ptsJ >= 15;
-                alert(victoria ? "¡GANASTE LA PARTIDA! +15 Puntos Globales" : "PERDISTE LA PARTIDA");
-                if(victoria) {
-                    userData.pts += 15;
-                    await db.ref('usuarios/' + userData.nick).update({ pts: userData.pts });
-                }
-                location.reload();
-            } else {
-                if(miMano.length === 0) nuevaMano();
-                else {
-                    render();
-                    if(mesaLocal.turno === "Bot") setTimeout(botJuega, 1000);
-                }
+            // 2. Actualizar cara a cara si es contra humano (simulado aquí para el Bot)
+            if(rivalActual !== "Bot") {
+                const path = [user.nick, rivalActual].sort().join("_");
+                const snap = await db.ref('historial/' + path).once('value');
+                const data = snap.val() || { [user.nick]: 0, [rivalActual]: 0 };
+                data[ganoYo ? user.nick : rivalActual]++;
+                await db.ref('historial/' + path).set(data);
             }
         }
 
+        // --- RANKING GLOBAL ---
+        async function mostrarRanking() {
+            const snap = await db.ref('usuarios').orderByChild('pts').limitToLast(10).once('value');
+            const list = document.getElementById('ranking-list');
+            list.innerHTML = "";
+            let arr = [];
+            snap.forEach(u => { arr.push(u.val()); });
+            arr.reverse().forEach((u, i) => {
+                list.innerHTML += `<div class="rank-item"><span>#${i+1} ${u.nick}</span> <b>${u.pts} pts</b></div>`;
+            });
+            document.getElementById('modal-ranking').style.display = 'block';
+        }
+
+        function cerrarRanking() { document.getElementById('modal-ranking').style.display = 'none'; }
+
+        // --- LÓGICA DE JUEGO (SIMPLIFICADA PARA TEST) ---
+        function nuevaMano() {
+            mesa = { ptsJ: 0, ptsB: 0, tiradas: [], turno: user.nick };
+            repartir();
+        }
+
+        function repartir() {
+            const m = [];
+            ["Oros","Copas","Espadas","Bastos"].forEach(p => [1,2,3,4,7,10,11,12].forEach(v => m.push({v,p})));
+            m.sort(()=>Math.random()-0.5);
+            miMano = [m[0],m[1],m[2]];
+            render();
+        }
+
+        function tirarCarta(i) {
+            if(mesa.tiradas.length >= 2) return;
+            mesa.tiradas.push({ j: user.nick, c: miMano.splice(i,1)[0] });
+            render();
+            setTimeout(botJuega, 800);
+        }
+
+        function botJuega() {
+            mesa.tiradas.push({ j: "Bot", c: {v: Math.floor(Math.random()*12), p: "Oros"} });
+            render();
+            setTimeout(evaluar, 800);
+        }
+
+        async function evaluar() {
+            const ganoRonda = mesa.tiradas[0].c.v >= mesa.tiradas[1].c.v;
+            if(ganoRonda) mesa.ptsJ++; else mesa.ptsB++;
+            mesa.tiradas = [];
+            if(mesa.ptsJ >= 15 || mesa.ptsB >= 15) {
+                const ganoPartida = mesa.ptsJ >= 15;
+                alert(ganoPartida ? "¡VICTORIA!" : "DERROTA");
+                await registrarResultado(ganoPartida);
+                location.reload();
+            } else if(miMano.length === 0) repartir();
+            else render();
+        }
+
         function render() {
-            document.getElementById('score-mine').innerText = mesaLocal.ptsJ;
-            document.getElementById('score-theirs').innerText = mesaLocal.ptsB;
-            document.getElementById('turn-indicator').innerText = mesaLocal.turno === userData.nick ? "TU TURNO" : "ESPERANDO RIVAL...";
-
-            const handDiv = document.getElementById('my-hand');
-            handDiv.innerHTML = "";
-            miMano.forEach((c, i) => {
-                const d = document.createElement('div');
-                d.className = 'card';
-                d.setAttribute('data-palo', c.p);
-                d.innerHTML = `<span>${c.v}</span><small>${ICONOS[c.p]}</small>`;
-                d.onclick = () => tirarCarta(i);
-                handDiv.appendChild(d);
+            document.getElementById('score-mine').innerText = mesa.ptsJ;
+            document.getElementById('score-theirs').innerText = mesa.ptsB;
+            const h = document.getElementById('my-hand'); h.innerHTML = "";
+            miMano.forEach((c,i) => {
+                const d = document.createElement('div'); d.className='card'; d.innerHTML=`${c.v}<br>${c.p[0]}`;
+                d.onclick = () => tirarCarta(i); h.appendChild(d);
             });
-
-            const tableDiv = document.getElementById('played-area');
-            tableDiv.innerHTML = "";
-            mesaLocal.tiradas.forEach(t => {
-                const d = document.createElement('div');
-                d.className = 'card in-table';
-                d.setAttribute('data-palo', t.carta.p);
-                d.innerHTML = `<span>${t.carta.v}</span><small>${ICONOS[t.carta.p]}</small>`;
-                tableDiv.appendChild(d);
+            const a = document.getElementById('played-area'); a.innerHTML = "";
+            mesa.tiradas.forEach(t => {
+                a.innerHTML += `<div class="card">${t.c.v}<br>${t.c.p[0]}</div>`;
             });
+        }
+
+        // Fondo animado
+        for(let i=0; i<10; i++) {
+            let d = document.createElement('div'); d.className='floating-card'; d.innerText='♦';
+            d.style.left = Math.random()*100+'vw'; d.style.animationDelay = Math.random()*10+'s';
+            document.getElementById('bg-anim').appendChild(d);
         }
     </script>
 </body>
