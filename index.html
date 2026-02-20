@@ -3,71 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Cards | Multi & BOT</title>
+    <title>Elite Cards | Global Ranking</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --gold: #d4af37; --felt: #0a5c36; --oro: #b8860b; --copa: #d32f2f; --espada: #1976d2; --basto: #388e3c; }
-        body, html { margin: 0; padding: 0; height: 100%; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
-        .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        :root { --gold: #d4af37; --felt: #0a5c36; --dark: #0a0a0a; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        /* FONDO ANIMADO */
+        .bg-animation { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle, #1a1a1a, #000); overflow: hidden; }
+        .floating-card { position: absolute; opacity: 0.1; font-size: 50px; animation: float 15s linear infinite; bottom: -100px; }
+        @keyframes float { 
+            from { transform: translateY(0) rotate(0deg); }
+            to { transform: translateY(-110vh) rotate(360deg); }
+        }
+
+        .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .active { display: flex; }
 
-        /* Menú y Lobby */
-        .card-menu { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 85%; max-width: 350px; }
-        .btn-main { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 8px; }
-        .btn-exit { background: #900; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; position: absolute; top: 15px; left: 15px; z-index: 200; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #eee; color: #000; }
+        /* Interfaz */
+        .card-menu { background: rgba(0,0,0,0.8); padding: 30px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; max-width: 350px; box-shadow: 0 0 20px var(--gold); }
+        .btn-main { background: linear-gradient(to bottom, var(--gold), #b8860b); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.3s; }
+        .btn-main:hover { transform: scale(1.05); filter: brightness(1.2); }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--gold); background: #222; color: white; text-align: center; }
 
-        /* Tapete de Juego */
+        /* Juego */
         #screen-game { background: radial-gradient(circle, var(--felt) 0%, #052c1a 100%); }
-        .scoreboard { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; z-index: 100; }
-        .hand { display: flex; gap: 8px; position: absolute; bottom: 25px; z-index: 10; }
-        .card { width: 70px; height: 105px; background: white; border-radius: 8px; color: black; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #333; cursor: pointer; }
-        .card[data-palo="Oros"] { color: var(--oro); border-color: var(--oro); }
-        .card[data-palo="Copas"] { color: var(--copa); border-color: var(--copa); }
-        .card[data-palo="Espadas"] { color: var(--espada); border-color: var(--espada); }
-        .card[data-palo="Bastos"] { color: var(--basto); border-color: var(--basto); }
-        #played-area { width: 100%; height: 140px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .msg { position: absolute; top: 85px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: var(--gold); }
+        .scoreboard { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--gold); font-size: 0.8rem; line-height: 1.4; }
+        
+        .card { 
+            width: 75px; height: 110px; background: white; border-radius: 8px; color: black;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: bold; border: 3px solid #333; cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+        .card:hover { transform: translateY(-15px); z-index: 100; }
+        .in-table { animation: deal 0.5s ease-out forwards; }
+        @keyframes deal { from { transform: translateY(200px) scale(0); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+        /* Colores Palos */
+        .card[data-palo="Oros"] { color: #b8860b; border-color: #b8860b; }
+        .card[data-palo="Copas"] { color: #d32f2f; border-color: #d32f2f; }
+        .card[data-palo="Espadas"] { color: #1976d2; border-color: #1976d2; }
+        .card[data-palo="Bastos"] { color: #388e3c; border-color: #388e3c; }
+
+        .hand { display: flex; gap: 10px; position: absolute; bottom: 30px; }
     </style>
 </head>
 <body>
 
+    <div class="bg-animation" id="bg-anim"></div>
+
     <div id="screen-login" class="screen active">
         <div class="card-menu">
-            <h1 style="color:var(--gold); margin:0;">ELITE CARDS</h1>
-            <input type="text" id="player-nick" placeholder="Tu Apodo">
-            <p>Modo BOT:</p>
-            <select id="bot-difficulty">
-                <option value="easy">Fácil 🟢</option>
-                <option value="hard">Difícil 🔴</option>
-            </select>
-            <button class="btn-main" onclick="iniciarModoBot()">SOLO vs BOT 🤖</button>
-            <button class="btn-main" style="background:#333; color:white;" onclick="entrarLobby()">MULTIJUGADOR 👥</button>
+            <h1 style="color:var(--gold); margin:0 0 10px 0;">ELITE CARDS</h1>
+            <input type="text" id="player-nick" placeholder="Usuario">
+            <input type="password" id="player-pin" placeholder="PIN (4 dígitos)" maxlength="4">
+            <p id="user-status" style="font-size: 10px; color: var(--gold);"></p>
+            <button class="btn-main" onclick="autenticar()">INGRESAR / REGISTRAR</button>
         </div>
-    </div>
-
-    <div id="screen-lobby" class="screen">
-        <button class="btn-exit" onclick="abandonarPartida()">VOLVER</button>
-        <h2 style="color:var(--gold)">Salas Disponibles</h2>
-        <div id="rooms-container" style="width: 85%; margin-bottom: 20px;"></div>
-        <button class="btn-main" style="width: 70%" onclick="crearMesaMulti()">+ CREAR MESA</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <button class="btn-exit" onclick="abandonarPartida()">✖ ABANDONAR</button>
         <div class="scoreboard">
+            <b id="display-name">---</b><br>
+            PUNTOS GLOBAL: <span id="global-pts">0</span><br><hr>
+            ESTA PARTIDA:<br>
             TÚ: <span id="score-mine">0</span> | RIVAL: <span id="score-theirs">0</span>
         </div>
-        <div id="turn-indicator" class="msg">Cargando...</div>
-        <div id="played-area"></div>
+        <div id="played-area" style="display: flex; gap: 15px; height: 150px;"></div>
         <div class="hand" id="my-hand"></div>
     </div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
+        // CONFIG FIREBASE (Sigue usando la tuya)
         const firebaseConfig = { 
             apiKey: "AIzaSyBKxFnl3QcmKNTm9b2vUZ7yd3mrcK4Mzm0",
             authDomain: "grandauctioneer.firebaseapp.com",
@@ -78,188 +89,146 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let miNombre = "", miMano = [], manoBot = [], mesaID = null;
-        let esMulti = false, miRol = "host", mesaLocal = null;
+        let userData = { nick: "", pin: "", pts: 0 };
+        let miMano = [], manoBot = [], mesaLocal = null;
         const ICONOS = { "Oros": "🪙", "Copas": "🏆", "Espadas": "⚔️", "Bastos": "🪵" };
 
-        function obtenerPoder(v, p) {
-            if (v === 1 && p === "Espadas") return 14;
-            if (v === 1 && p === "Bastos") return 13;
-            if (v === 7 && p === "Espadas") return 12;
-            if (v === 7 && p === "Oros") return 11;
-            if (v === 3) return 10; if (v === 2) return 9; if (v === 1) return 8;
-            return v;
+        // --- FONDO ANIMADO ---
+        function createBg() {
+            const anim = document.getElementById('bg-anim');
+            const icons = ['♠','♣','♥','♦'];
+            for(let i=0; i<15; i++) {
+                let div = document.createElement('div');
+                div.className = 'floating-card';
+                div.innerText = icons[Math.floor(Math.random()*4)];
+                div.style.left = Math.random() * 100 + 'vw';
+                div.style.animationDelay = Math.random() * 15 + 's';
+                anim.appendChild(div);
+            }
+        }
+        createBg();
+
+        // --- SISTEMA DE USUARIOS ---
+        async function autenticar() {
+            const nick = document.getElementById('player-nick').value.trim().toLowerCase();
+            const pin = document.getElementById('player-pin').value;
+
+            if(nick.length < 3 || pin.length < 4) return alert("Completa los datos");
+
+            const snap = await db.ref('usuarios/' + nick).once('value');
+            const data = snap.val();
+
+            if(data) {
+                if(data.pin === pin) {
+                    userData = data;
+                    iniciarJuego();
+                } else {
+                    alert("PIN INCORRECTO");
+                }
+            } else {
+                // Registro nuevo
+                userData = { nick: nick, pin: pin, pts: 0 };
+                await db.ref('usuarios/' + nick).set(userData);
+                iniciarJuego();
+            }
+        }
+
+        // --- LÓGICA DE JUEGO ---
+        function iniciarJuego() {
+            document.getElementById('screen-login').style.display = 'none';
+            document.getElementById('screen-game').style.display = 'flex';
+            document.getElementById('display-name').innerText = userData.nick.toUpperCase();
+            document.getElementById('global-pts').innerText = userData.pts;
+            
+            // Iniciar modo BOT por defecto para este ejemplo
+            const m = generarMazo();
+            miMano = [m[0], m[2], m[4]];
+            manoBot = [m[1], m[3], m[5]];
+            mesaLocal = { turno: userData.nick, ptsJ: 0, ptsB: 0, tiradas: [] };
+            render();
         }
 
         function generarMazo() {
-            const m = [];
-            ["Oros", "Copas", "Espadas", "Bastos"].forEach(p => [1,2,3,4,5,6,7,10,11,12].forEach(v => m.push({valor:v, palo:p})));
-            return m.sort(() => Math.random() - 0.5);
-        }
-
-        function abandonarPartida() { location.reload(); }
-
-        // --- LÓGICA MULTIJUGADOR ---
-        function entrarLobby() {
-            miNombre = document.getElementById('player-nick').value || "ProPlayer";
-            document.getElementById('screen-login').style.display = 'none';
-            document.getElementById('screen-lobby').style.display = 'flex';
-            
-            db.ref('mesas').on('value', snap => {
-                const cont = document.getElementById('rooms-container');
-                cont.innerHTML = "";
-                const mesas = snap.val();
-                if(mesas) {
-                    Object.keys(mesas).forEach(id => {
-                        if(mesas[id].estado === "esperando") {
-                            cont.innerHTML += `<button class="btn-main" onclick="unirseMesa('${id}')">UNIRSE A ${mesas[id].host}</button>`;
-                        }
-                    });
-                }
-            });
-        }
-
-        function crearMesaMulti() {
-            mesaID = "Mesa-" + Math.floor(Math.random()*9999);
-            esMulti = true;
-            miRol = "host";
-            const mazo = generarMazo();
-            db.ref('mesas/' + mesaID).set({
-                host: miNombre, invitado: "", mazo: mazo, turno: miNombre,
-                estado: "esperando", cartasTiradas: [], puntosHost: 0, puntosInvitado: 0
-            }).then(() => conectarPartida());
-        }
-
-        function unirseMesa(id) {
-            mesaID = id; esMulti = true; miRol = "invitado";
-            db.ref('mesas/' + id).update({ invitado: miNombre, estado: "jugando" });
-            conectarPartida();
-        }
-
-        function conectarPartida() {
-            document.getElementById('screen-lobby').style.display = 'none';
-            document.getElementById('screen-game').style.display = 'flex';
-            
-            db.ref('mesas/' + mesaID).on('value', snap => {
-                const mesa = snap.val();
-                if(!mesa) return;
-                
-                if(miMano.length === 0) {
-                    miMano = (miRol === "host") ? [mesa.mazo[0], mesa.mazo[2], mesa.mazo[4]] : [mesa.mazo[1], mesa.mazo[3], mesa.mazo[5]];
-                }
-                
-                mesaLocal = mesa; // Sincronizar mesa de la nube con local
-                renderizarTodo();
-                
-                if(mesa.cartasTiradas && mesa.cartasTiradas.length === 2 && miRol === "host") {
-                    setTimeout(() => evaluarRondaMulti(mesa), 1500);
-                }
-            });
-        }
-
-        function evaluarRondaMulti(mesa) {
-            const p1 = obtenerPoder(mesa.cartasTiradas[0].carta.valor, mesa.cartasTiradas[0].carta.palo);
-            const p2 = obtenerPoder(mesa.cartasTiradas[1].carta.valor, mesa.cartasTiradas[1].carta.palo);
-            const ganador = (p1 >= p2) ? mesa.cartasTiradas[0].jugador : mesa.cartasTiradas[1].jugador;
-            
-            let pHost = mesa.puntosHost + (ganador === mesa.host ? 1 : 0);
-            let pInv = mesa.puntosInvitado + (ganador === mesa.invitado ? 1 : 0);
-
-            if(pHost >= 15 || pInv >= 15) {
-                alert("FIN: Gana " + ganador);
-                db.ref('mesas/' + mesaID).remove();
-                location.reload();
-            } else {
-                db.ref('mesas/' + mesaID).update({
-                    cartasTiradas: [], turno: ganador, puntosHost: pHost, puntosInvitado: pInv,
-                    mazo: (mesa.cartasTiradas.length === 2 && miMano.length === 0) ? generarMazo() : mesa.mazo
-                });
-            }
-        }
-
-        // --- LÓGICA BOT (LOCAL) ---
-        function iniciarModoBot() {
-            miNombre = document.getElementById('player-nick').value || "Jugador";
-            esMulti = false;
-            document.getElementById('screen-login').style.display = 'none';
-            document.getElementById('screen-game').style.display = 'flex';
-            
-            const mazo = generarMazo();
-            miMano = [mazo[0], mazo[2], mazo[4]];
-            manoBot = [mazo[1], mazo[3], mazo[5]];
-            mesaLocal = { turno: miNombre, puntosHost: 0, puntosInvitado: 0, cartasTiradas: [] };
-            renderizarTodo();
+            const p = ["Oros", "Copas", "Espadas", "Bastos"];
+            const v = [1,2,3,4,5,6,7,10,11,12];
+            let deck = [];
+            p.forEach(palo => v.forEach(val => deck.push({valor: val, palo: palo})));
+            return deck.sort(() => Math.random() - 0.5);
         }
 
         function tirarCarta(i) {
-            if(mesaLocal.turno !== miNombre || mesaLocal.cartasTiradas.length >= 2) return;
+            if(mesaLocal.turno !== userData.nick || mesaLocal.tiradas.length >= 2) return;
+            
+            const c = miMano.splice(i, 1)[0];
+            mesaLocal.tiradas.push({ j: userData.nick, carta: c });
+            mesaLocal.turno = "Bot";
+            render();
+            setTimeout(botTurno, 1000);
+        }
 
-            const carta = miMano.splice(i, 1)[0];
-            mesaLocal.cartasTiradas.push({ jugador: miNombre, carta: carta });
+        function botTurno() {
+            const c = manoBot.splice(0, 1)[0];
+            mesaLocal.tiradas.push({ j: "Bot", carta: c });
+            render();
+            setTimeout(evaluar, 1000);
+        }
 
-            if(esMulti) {
-                const sigTurno = (miRol === "host") ? (mesaLocal.invitado || miNombre) : mesaLocal.host;
-                db.ref('mesas/' + mesaID).update({ cartasTiradas: mesaLocal.cartasTiradas, turno: sigTurno });
-            } else {
-                mesaLocal.turno = "Bot";
-                renderizarTodo();
-                if(mesaLocal.cartasTiradas.length === 1) setTimeout(botDecision, 1000);
-                else evaluarRondaBot();
+        function evaluar() {
+            const p1 = mesaLocal.tiradas[0].carta.valor; // Simplificado para el ejemplo
+            const p2 = mesaLocal.tiradas[1].carta.valor;
+            const win = p1 >= p2 ? mesaLocal.tiradas[0].j : mesaLocal.tiradas[1].j;
+
+            if(win === userData.nick) mesaLocal.ptsJ++; else mesaLocal.ptsB++;
+            
+            mesaLocal.tiradas = [];
+            mesaLocal.turno = win;
+
+            if(miMano.length === 0) {
+                const m = generarMazo();
+                miMano = [m[0], m[2], m[4]];
+                manoBot = [m[1], m[3], m[5]];
             }
-        }
 
-        function botDecision() {
-            const index = Math.floor(Math.random() * manoBot.length);
-            const carta = manoBot.splice(index, 1)[0];
-            mesaLocal.cartasTiradas.push({ jugador: "Bot", carta: carta });
-            renderizarTodo();
-            evaluarRondaBot();
-        }
-
-        function evaluarRondaBot() {
-            if(mesaLocal.cartasTiradas.length === 2) {
-                setTimeout(() => {
-                    const p1 = obtenerPoder(mesaLocal.cartasTiradas[0].carta.valor, mesaLocal.cartasTiradas[0].carta.palo);
-                    const p2 = obtenerPoder(mesaLocal.cartasTiradas[1].carta.valor, mesaLocal.cartasTiradas[1].carta.palo);
-                    const ganador = (p1 >= p2) ? mesaLocal.cartasTiradas[0].jugador : mesaLocal.cartasTiradas[1].jugador;
-                    
-                    if(ganador === miNombre) mesaLocal.puntosHost++; else mesaLocal.puntosInvitado++;
-                    mesaLocal.cartasTiradas = [];
-                    mesaLocal.turno = ganador;
-
-                    if(miMano.length === 0) {
-                        const mazo = generarMazo();
-                        miMano = [mazo[0], mazo[2], mazo[4]];
-                        manoBot = [mazo[1], mazo[3], mazo[5]];
-                    }
-                    if(mesaLocal.puntosHost >= 15 || mesaLocal.puntosInvitado >= 15) {
-                        alert("Gana: " + ganador); location.reload();
-                    }
-                    renderizarTodo();
-                    if(mesaLocal.turno === "Bot") setTimeout(botDecision, 1000);
-                }, 1200);
+            if(mesaLocal.ptsJ >= 15) {
+                alert("¡GANASTE! +10 puntos globales");
+                actualizarPuntosGlobales(10);
+                location.reload();
+            } else if(mesaLocal.ptsB >= 15) {
+                alert("Perdiste...");
+                location.reload();
             }
+            render();
+            if(mesaLocal.turno === "Bot") setTimeout(botTurno, 1000);
         }
 
-        function renderizarTodo() {
-            document.getElementById('score-mine').innerText = (esMulti && miRol === "invitado") ? mesaLocal.puntosInvitado : mesaLocal.puntosHost;
-            document.getElementById('score-theirs').innerText = (esMulti && miRol === "invitado") ? mesaLocal.puntosHost : mesaLocal.puntosInvitado;
-            document.getElementById('turn-indicator').innerText = (mesaLocal.turno === miNombre) ? "TU TURNO" : "ESPERANDO...";
+        async function actualizarPuntosGlobales(p) {
+            userData.pts += p;
+            await db.ref('usuarios/' + userData.nick).update({ pts: userData.pts });
+        }
 
-            const handDiv = document.getElementById('my-hand');
-            handDiv.innerHTML = "";
+        function render() {
+            document.getElementById('score-mine').innerText = mesaLocal.ptsJ;
+            document.getElementById('score-theirs').innerText = mesaLocal.ptsB;
+
+            const h = document.getElementById('my-hand');
+            h.innerHTML = "";
             miMano.forEach((c, i) => {
                 const d = document.createElement('div');
-                d.className = 'card'; d.setAttribute('data-palo', c.palo);
-                d.innerHTML = `<div>${c.valor}</div><div>${ICONOS[c.palo]}</div>`;
+                d.className = 'card';
+                d.setAttribute('data-palo', c.palo);
+                d.innerHTML = `${c.valor}<br>${ICONOS[c.palo]}`;
                 d.onclick = () => tirarCarta(i);
-                handDiv.appendChild(d);
+                h.appendChild(d);
             });
 
-            const tableDiv = document.getElementById('played-area');
-            tableDiv.innerHTML = "";
-            (mesaLocal.cartasTiradas || []).forEach(t => {
-                tableDiv.innerHTML += `<div class="card" data-palo="${t.carta.palo}" style="cursor:default"><div>${t.carta.valor}</div><div>${ICONOS[t.carta.palo]}</div></div>`;
+            const a = document.getElementById('played-area');
+            a.innerHTML = "";
+            mesaLocal.tiradas.forEach(t => {
+                const d = document.createElement('div');
+                d.className = 'card in-table';
+                d.setAttribute('data-palo', t.carta.palo);
+                d.innerHTML = `${t.carta.valor}<br>${ICONOS[t.carta.palo]}`;
+                a.appendChild(d);
             });
         }
     </script>
